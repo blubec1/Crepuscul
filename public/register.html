@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crepuscul - Create Account</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0d0b1a;
+      color: #c8c0d8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.6;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 1rem;
+    }
+
+    header { text-align: center; margin-bottom: 2rem; }
+
+    header h1 {
+      font-size: 2.2rem;
+      color: #a78bfa;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+    }
+
+    .tagline {
+      color: #6b5f82;
+      font-size: 0.95rem;
+      margin-top: 0.3rem;
+    }
+
+    .login-card {
+      background: #16122a;
+      border: 1px solid #2a2445;
+      border-radius: 12px;
+      padding: 2rem 1.5rem;
+    }
+
+    .auth-form { display: flex; flex-direction: column; gap: 0.8rem; }
+
+    .auth-form input {
+      width: 100%;
+      background: #1e1a35;
+      border: 1px solid #2a2445;
+      border-radius: 8px;
+      color: #c8c0d8;
+      padding: 0.8rem 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .auth-form input:focus {
+      outline: none;
+      border-color: #7c5cbf;
+    }
+
+    .auth-form input::placeholder { color: #4a4260; }
+
+    .primary-btn {
+      background: #7c5cbf;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      margin-top: 0.3rem;
+    }
+
+    .primary-btn:hover { background: #6b4aaf; }
+
+    .primary-btn:disabled {
+      background: #3a3355;
+      color: #6b5f82;
+      cursor: not-allowed;
+    }
+
+    .error-msg {
+      color: #fca5a5;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 0.3rem;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: 0.85rem;
+      color: #6b5f82;
+    }
+
+    .login-link a {
+      color: #a78bfa;
+      text-decoration: none;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: #3a3355;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <header>
+      <h1>Crepuscul</h1>
+      <p class="tagline">You are not alone in the dark</p>
+    </header>
+
+    <div class="login-card">
+      <form id="register-form" class="auth-form">
+        <input type="text" id="reg-username" placeholder="Choose a username" required autocomplete="username">
+        <input type="password" id="reg-password" placeholder="Password (min 6 characters)" required minlength="6" autocomplete="new-password">
+        <button type="submit" class="primary-btn" id="reg-btn">Create Account</button>
+        <div id="reg-error" class="error-msg hidden"></div>
+      </form>
+
+      <p class="login-link">Already have an account? <a href="/login.html">Sign in</a></p>
+    </div>
+
+    <footer>Crepuscul - You are not alone in the dark.</footer>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    const TOKEN_KEY = "crepuscul_token";
+    const USER_KEY = "crepuscul_user";
+
+    const registerForm = document.getElementById("register-form");
+    const regError = document.getElementById("reg-error");
+
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
+
+    function setBtnLoading(btn, loading) {
+      btn.disabled = loading;
+      btn.dataset.origText = btn.dataset.origText || btn.textContent;
+      btn.textContent = loading ? "Loading..." : btn.dataset.origText;
+    }
+
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("reg-btn");
+      const username = document.getElementById("reg-username").value.trim();
+      const password = document.getElementById("reg-password").value;
+
+      regError.classList.add("hidden");
+      setBtnLoading(btn, true);
+
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(regError, data.error || "Registration failed");
+          setBtnLoading(btn, false);
+          return;
+        }
+
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(USER_KEY, data.username);
+        window.location.href = "/index.html";
+      } catch (err) {
+        showError(regError, "Could not connect to server");
+        setBtnLoading(btn, false);
+      }
+    });
+  </script>
+</body>
+</html>

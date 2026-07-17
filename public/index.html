@@ -66,13 +66,8 @@
 
     <section id="crisis" class="card crisis-card">
       <h2>Need Real Help Now?</h2>
-      <p>If you are in crisis or need someone to talk to immediately:</p>
-      <ul>
-        <li><strong>988 Suicide & Crisis Lifeline</strong> - Call or text <a href="tel:988">988</a></li>
-        <li><strong>Crisis Text Line</strong> - Text HOME to <a href="sms:741741">741741</a></li>
-        <li><strong>Emergency</strong> - Call <a href="tel:112">112</a></li>
-        <li><strong>SAMHSA Helpline</strong> - <a href="tel:18006624357">1-800-662-4357</a></li>
-      </ul>
+      <p id="crisis-region-label">Detecting your region...</p>
+      <ul id="crisis-list"></ul>
       <p class="crisis-note">You matter. Help is available 24/7.</p>
     </section>
   </main>
@@ -81,6 +76,19 @@
     <p>Crepuscul - You are not alone in the dark.</p>
   </footer>
 
+  <button id="help-fab" class="help-fab" title="Get help now">?</button>
+
+  <div id="help-panel" class="help-panel hidden">
+    <div class="help-panel-header">
+      <h3>Get Help Now</h3>
+      <button id="close-help-panel" class="help-panel-close">&times;</button>
+    </div>
+    <p id="help-panel-region">Detecting your region...</p>
+    <ul id="help-panel-list"></ul>
+    <p class="crisis-note">You matter. Help is available 24/7.</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
