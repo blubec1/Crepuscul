@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crepuscul - You Are Not Alone</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Crepuscul</h1>
+    <p class="tagline">For the hours when the world feels heavy</p>
+  </header>
+
+  <main>
+    <section id="checkin" class="card">
+      <h2>How are you feeling right now?</h2>
+      <p class="subtitle">Your response is anonymous and private</p>
+      <div id="mood-buttons">
+        <button class="mood-btn" data-mood="1" title="Very low">
+          <span class="mood-emoji">😞</span>
+          <span class="mood-label">Struggling</span>
+        </button>
+        <button class="mood-btn" data-mood="2" title="Low">
+          <span class="mood-emoji">😔</span>
+          <span class="mood-label">Anxious</span>
+        </button>
+        <button class="mood-btn" data-mood="3" title="Okay">
+          <span class="mood-emoji">😐</span>
+          <span class="mood-label">Okay</span>
+        </button>
+        <button class="mood-btn" data-mood="4" title="Good">
+          <span class="mood-emoji">🙂</span>
+          <span class="mood-label">Better</span>
+        </button>
+        <button class="mood-btn" data-mood="5" title="Great">
+          <span class="mood-emoji">😊</span>
+          <span class="mood-label">Good</span>
+        </button>
+      </div>
+      <textarea id="note-input" placeholder="Optional: what's on your mind?" maxlength="300"></textarea>
+      <button id="submit-checkin" class="primary-btn" disabled>Send Check-in</button>
+    </section>
+
+    <section id="exercise-area" class="card hidden">
+      <h2 id="exercise-title"></h2>
+      <p id="exercise-instructions"></p>
+      <div id="exercise-timer" class="hidden">
+        <div id="timer-circle">
+          <span id="timer-text">0:00</span>
+        </div>
+      </div>
+      <button id="start-exercise" class="primary-btn">Start Exercise</button>
+      <button id="close-exercise" class="secondary-btn">Close</button>
+    </section>
+
+    <section id="support-wall" class="card">
+      <h2>Support Wall</h2>
+      <p class="subtitle">Messages from others who are awake right now</p>
+      <div id="messages-container"></div>
+      <div id="message-form">
+        <textarea id="message-input" placeholder="Send an anonymous message of support..." maxlength="500"></textarea>
+        <button id="send-message" class="primary-btn">Send</button>
+      </div>
+    </section>
+
+    <section id="crisis" class="card crisis-card">
+      <h2>Need Real Help Now?</h2>
+      <p>If you are in crisis or need someone to talk to immediately:</p>
+      <ul>
+        <li><strong>988 Suicide & Crisis Lifeline</strong> - Call or text <a href="tel:988">988</a></li>
+        <li><strong>Crisis Text Line</strong> - Text HOME to <a href="sms:741741">741741</a></li>
+        <li><strong>Emergency</strong> - Call <a href="tel:112">112</a></li>
+        <li><strong>SAMHSA Helpline</strong> - <a href="tel:18006624357">1-800-662-4357</a></li>
+      </ul>
+      <p class="crisis-note">You matter. Help is available 24/7.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Crepuscul - You are not alone in the dark.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

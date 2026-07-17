@@ -1,0 +1,328 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0d0b1a;
+  color: #c8c0d8;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+header {
+  text-align: center;
+  padding: 2.5rem 1rem 1.5rem;
+  background: linear-gradient(180deg, #1a1530 0%, #0d0b1a 100%);
+}
+
+header h1 {
+  font-size: 2.2rem;
+  color: #a78bfa;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+}
+
+.tagline {
+  color: #6b5f82;
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.card {
+  background: #16122a;
+  border: 1px solid #2a2445;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.card h2 {
+  color: #c4b5fd;
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.subtitle {
+  color: #6b5f82;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* Mood Buttons */
+#mood-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.mood-btn {
+  background: #1e1a35;
+  border: 2px solid #2a2445;
+  border-radius: 10px;
+  padding: 0.7rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 80px;
+  color: #c8c0d8;
+}
+
+.mood-btn:hover {
+  border-color: #7c5cbf;
+  background: #221e3a;
+}
+
+.mood-btn.selected {
+  border-color: #a78bfa;
+  background: #2a2250;
+}
+
+.mood-emoji {
+  font-size: 1.8rem;
+}
+
+.mood-label {
+  font-size: 0.75rem;
+  color: #8b7faa;
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  background: #1e1a35;
+  border: 1px solid #2a2445;
+  border-radius: 8px;
+  color: #c8c0d8;
+  padding: 0.8rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 0.8rem;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #7c5cbf;
+}
+
+textarea::placeholder {
+  color: #4a4260;
+}
+
+/* Buttons */
+.primary-btn {
+  background: #7c5cbf;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  width: 100%;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #6b4aaf;
+}
+
+.primary-btn:disabled {
+  background: #3a3355;
+  color: #6b5f82;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  background: transparent;
+  color: #8b7faa;
+  border: 1px solid #2a2445;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.secondary-btn:hover {
+  border-color: #7c5cbf;
+}
+
+/* Exercise Area */
+#exercise-area p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+#timer-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #7c5cbf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+#timer-text {
+  font-size: 1.5rem;
+  color: #c4b5fd;
+  font-weight: 300;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 92, 191, 0.3); }
+  50% { box-shadow: 0 0 20px 5px rgba(124, 92, 191, 0.15); }
+}
+
+/* Support Wall */
+#messages-container {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.message-item {
+  background: #1e1a35;
+  border-left: 3px solid #4a3f6b;
+  border-radius: 0 8px 8px 0;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.message-item p {
+  font-size: 0.9rem;
+  color: #c8c0d8;
+}
+
+.message-item .message-time {
+  font-size: 0.75rem;
+  color: #4a4260;
+  margin-top: 0.3rem;
+}
+
+#message-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+#message-form textarea {
+  flex: 1;
+  min-height: 50px;
+  margin-bottom: 0;
+}
+
+#send-message {
+  width: auto;
+  padding: 0.7rem 1.2rem;
+}
+
+/* Crisis Section */
+.crisis-card {
+  border-color: #7f1d1d;
+  background: #1c1017;
+}
+
+.crisis-card h2 {
+  color: #fca5a5;
+}
+
+.crisis-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.crisis-card li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #2a1a1a;
+}
+
+.crisis-card a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.crisis-card a:hover {
+  text-decoration: underline;
+}
+
+.crisis-note {
+  color: #fca5a5;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Utilities */
+.hidden {
+  display: none !important;
+}
+
+/* Success state */
+.success-message {
+  text-align: center;
+  padding: 1rem;
+  color: #86efac;
+  font-size: 0.95rem;
+}
+
+/* Scrollbar */
+#messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#messages-container::-webkit-scrollbar-track {
+  background: #1e1a35;
+}
+
+#messages-container::-webkit-scrollbar-thumb {
+  background: #3a3355;
+  border-radius: 3px;
+}
+
+footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #3a3355;
+  font-size: 0.8rem;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .mood-btn {
+    min-width: 60px;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .mood-emoji {
+    font-size: 1.5rem;
+  }
+
+  #message-form {
+    flex-direction: column;
+  }
+
+  #send-message {
+    width: 100%;
+  }
+}
