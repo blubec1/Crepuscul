@@ -1,0 +1,6 @@
+@Crepuscul.Api_HostAddress = http://localhost:5042
+
+GET {{Crepuscul.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

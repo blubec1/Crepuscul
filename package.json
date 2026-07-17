@@ -1,0 +1,30 @@
+{
+  "name": "crepuscul",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blubec1/Crepuscul.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/blubec1/Crepuscul/issues"
+  },
+  "homepage": "https://github.com/blubec1/Crepuscul#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.6",
+    "express": "^4.22.2"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}
