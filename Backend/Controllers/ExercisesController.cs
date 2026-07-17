@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Crepuscul.Api.Data;
-using Crepuscul.Api.Models;
+using Afterglow.Api.Data;
+using Afterglow.Api.Models;
 
-namespace Crepuscul.Api.Controllers;
+namespace Afterglow.Api.Controllers;
 
 [ApiController]
 [Route("api/exercises")]

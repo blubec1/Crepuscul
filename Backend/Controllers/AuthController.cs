@@ -4,9 +4,9 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Crepuscul.Api.Models;
+using Afterglow.Api.Models;
 
-namespace Crepuscul.Api.Controllers;
+namespace Afterglow.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]

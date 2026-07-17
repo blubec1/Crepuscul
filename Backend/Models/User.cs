@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace Crepuscul.Api.Models;
+namespace Afterglow.Api.Models;
 
 public class User : IdentityUser
 {

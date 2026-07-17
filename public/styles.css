@@ -58,47 +58,118 @@ main {
   margin-bottom: 1rem;
 }
 
-/* Mood Buttons */
-#mood-buttons {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+/* Check-in Questionnaire */
+.question-block {
+  margin-bottom: 1.2rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid #2a2445;
 }
 
-.mood-btn {
+.question-block:last-of-type {
+  border-bottom: none;
+  margin-bottom: 1rem;
+}
+
+.question-text {
+  color: #c8c0d8;
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+  font-weight: 500;
+}
+
+.scale-buttons,
+.yesno-buttons {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.scale-btn,
+.yesno-btn {
   background: #1e1a35;
   border: 2px solid #2a2445;
-  border-radius: 10px;
-  padding: 0.7rem 0.5rem;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 80px;
   color: #c8c0d8;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
-.mood-btn:hover {
+.scale-btn:hover,
+.yesno-btn:hover {
   border-color: #7c5cbf;
   background: #221e3a;
 }
 
-.mood-btn.selected {
+.scale-btn.selected,
+.yesno-btn.selected {
   border-color: #a78bfa;
   background: #2a2250;
 }
 
-.mood-emoji {
-  font-size: 1.8rem;
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #4a4260;
+  margin-top: 0.3rem;
+  padding: 0 0.5rem;
 }
 
-.mood-label {
+.yesno-buttons .yesno-btn {
+  min-width: 80px;
+}
+
+/* Dashboard Features Grid */
+#features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.feature-card {
+  background: #1e1a35;
+  border: 1px solid #2a2445;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.feature-card.recommended {
+  border-color: #7c5cbf;
+  background: #221e3a;
+}
+
+.feature-card h3 {
+  color: #c4b5fd;
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
+}
+
+.feature-card p {
+  color: #6b5f82;
   font-size: 0.75rem;
-  color: #8b7faa;
+  margin-bottom: 0.6rem;
+}
+
+.feature-btn {
+  background: #2a2250;
+  border: 1px solid #3a3355;
+  color: #c4b5fd;
+  border-radius: 6px;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feature-btn:hover {
+  background: #7c5cbf;
+  color: white;
+  border-color: #7c5cbf;
 }
 
 /* Textarea */
@@ -235,6 +306,79 @@ textarea::placeholder {
 #send-message {
   width: auto;
   padding: 0.7rem 1.2rem;
+}
+
+/* Buddy Chat */
+#buddy-chat-messages {
+  max-height: 500px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.buddy-message {
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.buddy-message-me {
+  background: #2a2250;
+  border-left: 3px solid #7c5cbf;
+  margin-left: auto;
+}
+
+.buddy-message-them {
+  background: #1e1a35;
+  border-left: 3px solid #4a3f6b;
+}
+
+.buddy-message p {
+  font-size: 0.9rem;
+  color: #c8c0d8;
+}
+
+#buddy-chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#buddy-chat-form textarea {
+  flex: 1;
+  min-height: 80px;
+  margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#buddy-chat-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#buddy-send-btn {
+  width: auto;
+  padding: 0.7rem 1.2rem;
+}
+
+#buddy-status {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+#buddy-chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#buddy-chat-messages::-webkit-scrollbar-track {
+  background: #1e1a35;
+}
+
+#buddy-chat-messages::-webkit-scrollbar-thumb {
+  background: #3a3355;
+  border-radius: 3px;
 }
 
 /* Crisis Section */
@@ -471,20 +615,22 @@ footer {
 
 /* Mobile */
 @media (max-width: 480px) {
-  .mood-btn {
-    min-width: 60px;
-    padding: 0.5rem 0.3rem;
+  #features-grid {
+    grid-template-columns: 1fr;
   }
 
-  .mood-emoji {
-    font-size: 1.5rem;
+  .buddy-message {
+    max-width: 90%;
   }
 
-  #message-form {
+  #message-form,
+  #buddy-chat-actions {
     flex-direction: column;
   }
 
-  #send-message {
+  #send-message,
+  #buddy-send-btn,
+  #leave-buddy-btn {
     width: 100%;
   }
 }

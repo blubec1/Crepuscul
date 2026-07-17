@@ -3,45 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crepuscul - You Are Not Alone</title>
+  <title>Afterglow - You Are Not Alone</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Crepuscul</h1>
+    <h1>Afterglow</h1>
     <p class="tagline">For the hours when the world feels heavy</p>
   </header>
 
   <main>
+    <!-- Check-in Questionnaire -->
     <section id="checkin" class="card">
-      <h2>How are you feeling right now?</h2>
-      <p class="subtitle">Your response is anonymous and private</p>
-      <div id="mood-buttons">
-        <button class="mood-btn" data-mood="1" title="Very low">
-          <span class="mood-emoji">😞</span>
-          <span class="mood-label">Struggling</span>
-        </button>
-        <button class="mood-btn" data-mood="2" title="Low">
-          <span class="mood-emoji">😔</span>
-          <span class="mood-label">Anxious</span>
-        </button>
-        <button class="mood-btn" data-mood="3" title="Okay">
-          <span class="mood-emoji">😐</span>
-          <span class="mood-label">Okay</span>
-        </button>
-        <button class="mood-btn" data-mood="4" title="Good">
-          <span class="mood-emoji">🙂</span>
-          <span class="mood-label">Better</span>
-        </button>
-        <button class="mood-btn" data-mood="5" title="Great">
-          <span class="mood-emoji">😊</span>
-          <span class="mood-label">Good</span>
-        </button>
+      <h2>How are you doing right now?</h2>
+      <p class="subtitle">Answer a few quick questions. Your response is anonymous.</p>
+      <div id="questions-container"></div>
+      <button id="submit-checkin" class="primary-btn" disabled>Submit Check-in</button>
+      <div id="checkin-success" class="success-message hidden">
+        <p>Thank you for checking in. Here are some things that might help you right now.</p>
       </div>
-      <textarea id="note-input" placeholder="Optional: what's on your mind?" maxlength="300"></textarea>
-      <button id="submit-checkin" class="primary-btn" disabled>Send Check-in</button>
+      <button id="resubmit-checkin" class="secondary-btn hidden">Change My Answers</button>
     </section>
 
+    <!-- Dashboard / Recommended Features -->
+    <section id="dashboard" class="card hidden">
+      <h2>What's available for you</h2>
+      <p class="subtitle">Based on how you're feeling</p>
+      <div id="features-grid"></div>
+    </section>
+
+    <!-- Exercise Area -->
     <section id="exercise-area" class="card hidden">
       <h2 id="exercise-title"></h2>
       <p id="exercise-instructions"></p>
@@ -54,6 +45,28 @@
       <button id="close-exercise" class="secondary-btn">Close</button>
     </section>
 
+    <!-- Buddy System -->
+    <section id="buddy-section" class="card hidden">
+      <h2>Find a Buddy</h2>
+      <p class="subtitle">Connect anonymously with someone who feels similar to you</p>
+      <div id="buddy-match-area">
+        <button id="find-buddy-btn" class="primary-btn">Find a Buddy</button>
+        <button id="cancel-buddy-btn" class="secondary-btn hidden">Cancel Search</button>
+        <p id="buddy-status" class="subtitle"></p>
+      </div>
+      <div id="buddy-chat" class="hidden">
+        <div id="buddy-chat-messages"></div>
+        <div id="buddy-chat-form">
+          <textarea id="buddy-chat-input" placeholder="Say something kind..." maxlength="500"></textarea>
+          <div id="buddy-chat-actions">
+            <button id="buddy-send-btn" class="primary-btn">Send</button>
+            <button id="leave-buddy-btn" class="secondary-btn">Leave Chat</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Support Wall -->
     <section id="support-wall" class="card">
       <h2>Support Wall</h2>
       <p class="subtitle">Messages from others who are awake right now</p>
@@ -64,6 +77,7 @@
       </div>
     </section>
 
+    <!-- Crisis Section (static fallback) -->
     <section id="crisis" class="card crisis-card">
       <h2>Need Real Help Now?</h2>
       <p id="crisis-region-label">Detecting your region...</p>
@@ -73,9 +87,10 @@
   </main>
 
   <footer>
-    <p>Crepuscul - You are not alone in the dark.</p>
+    <p>Afterglow - You are not alone in the dark.</p>
   </footer>
 
+  <!-- Floating SOS Help Button -->
   <button id="help-fab" class="help-fab" title="Get help now">?</button>
 
   <div id="help-panel" class="help-panel hidden">

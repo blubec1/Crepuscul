@@ -1,11 +1,23 @@
 const API = window.location.origin;
-const TOKEN_KEY = "crepuscul_token";
-const USER_KEY = "crepuscul_user";
+const TOKEN_KEY = "afterglow_token";
+const USER_KEY = "afterglow_user";
+const SESSION_KEY = "afterglow_session_id";
 
-let selectedMood = null;
+function getSessionId() {
+  let id = localStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
+}
+
 let activeExercise = null;
 let timerInterval = null;
 let signalRConnection = null;
+let buddyConnection = null;
+let currentBuddyMatchId = null;
+let buddyQueueInterval = null;
 
 // --- Auth Helpers ---
 function getAuthToken() {
@@ -35,7 +47,6 @@ async function authFetch(url, options = {}) {
 function initUserStatus() {
   const header = document.querySelector("header");
   const user = getAuthUser();
-
   const statusBar = document.createElement("div");
   statusBar.className = "user-status-bar";
 
@@ -53,29 +64,28 @@ function initUserStatus() {
 
   header.appendChild(statusBar);
 
-  const logoutBtn = document.getElementById("logout-btn");
-  const loginLinkBtn = document.getElementById("login-link-btn");
+  document.getElementById("logout-btn")?.addEventListener("click", async () => {
+    stopBuddyPolling();
+    try {
+      await authFetch(`${API}/api/buddy/queue`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: getSessionId() }),
+      });
+    } catch {}
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    if (signalRConnection) signalRConnection.stop();
+    if (buddyConnection) buddyConnection.stop();
+    window.location.href = "/login.html";
+  });
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      if (signalRConnection) {
-        signalRConnection.stop();
-        signalRConnection = null;
-      }
-      window.location.href = "/login.html";
-    });
-  }
-
-  if (loginLinkBtn) {
-    loginLinkBtn.addEventListener("click", () => {
-      window.location.href = "/login.html";
-    });
-  }
+  document.getElementById("login-link-btn")?.addEventListener("click", () => {
+    window.location.href = "/login.html";
+  });
 }
 
-// --- SignalR ---
+// --- SignalR (Support Wall) ---
 async function connectSignalR() {
   if (typeof signalR === "undefined") return;
 
@@ -99,123 +109,335 @@ async function connectSignalR() {
 
   try {
     await signalRConnection.start();
-    console.log("SignalR connected");
+    console.log("SignalR support wall connected");
   } catch (err) {
     console.error("SignalR connection failed:", err);
   }
 }
 
-// --- DOM Elements ---
-const moodButtons = document.querySelectorAll(".mood-btn");
-const noteInput = document.getElementById("note-input");
-const submitBtn = document.getElementById("submit-checkin");
-const exerciseArea = document.getElementById("exercise-area");
-const exerciseTitle = document.getElementById("exercise-title");
-const exerciseInstructions = document.getElementById("exercise-instructions");
-const exerciseTimer = document.getElementById("exercise-timer");
-const timerText = document.getElementById("timer-text");
-const startExerciseBtn = document.getElementById("start-exercise");
-const closeExerciseBtn = document.getElementById("close-exercise");
-const messagesContainer = document.getElementById("messages-container");
-const messageInput = document.getElementById("message-input");
-const sendMessageBtn = document.getElementById("send-message");
+// --- SignalR (Buddy Chat) ---
+async function connectBuddyChat(matchId) {
+  if (typeof signalR === "undefined") return;
 
-// --- Mood Selection ---
-moodButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    moodButtons.forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedMood = parseInt(btn.dataset.mood);
-    submitBtn.disabled = false;
+  if (buddyConnection) await buddyConnection.stop();
+
+  buddyConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${API}/hubs/buddy`)
+    .withAutomaticReconnect()
+    .build();
+
+  buddyConnection.on("ReceiveBuddyMessage", (senderSessionId, text, timestamp) => {
+    const container = document.getElementById("buddy-chat-messages");
+    const isMe = senderSessionId === getSessionId();
+    const msgHtml = `
+      <div class="buddy-message ${isMe ? "buddy-message-me" : "buddy-message-them"}">
+        <p>${escapeHtml(text)}</p>
+        <div class="message-time">${timeAgo(timestamp)}</div>
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", msgHtml);
+    container.scrollTop = container.scrollHeight;
   });
-});
 
-// --- Check-in Submit ---
-submitBtn.addEventListener("click", async () => {
-  if (!selectedMood) return;
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Sending...";
+  buddyConnection.on("MatchEnded", (endedMatchId, partnerSessionId) => {
+    if (currentBuddyMatchId === endedMatchId) {
+      const status = document.getElementById("buddy-status");
+      if (status) status.textContent = "Your buddy has left the match.";
+      resetBuddyState();
+    }
+  });
 
   try {
-    const res = await authFetch(`${API}/api/checkins`, {
+    await buddyConnection.start();
+    await buddyConnection.invoke("JoinBuddyChat", matchId);
+    console.log("Buddy chat connected for match", matchId);
+  } catch (err) {
+    console.error("Buddy chat connection failed:", err);
+  }
+}
+
+// --- Check-in Questionnaire ---
+async function loadQuestions() {
+  const container = document.getElementById("questions-container");
+  try {
+    const res = await authFetch(`${API}/api/checkin/questions`);
+    const questions = await res.json();
+
+    container.innerHTML = questions
+      .map((q) => {
+        if (q.type === "scale") {
+          return `
+            <div class="question-block" data-qid="${q.id}">
+              <p class="question-text">${escapeHtml(q.text)}</p>
+              <div class="scale-buttons">
+                <button class="scale-btn" data-value="1">1</button>
+                <button class="scale-btn" data-value="2">2</button>
+                <button class="scale-btn" data-value="3">3</button>
+                <button class="scale-btn" data-value="4">4</button>
+                <button class="scale-btn" data-value="5">5</button>
+              </div>
+              <div class="scale-labels"><span>Not at all</span><span>Extremely</span></div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="question-block" data-qid="${q.id}">
+              <p class="question-text">${escapeHtml(q.text)}</p>
+              <div class="yesno-buttons">
+                <button class="yesno-btn" data-value="0">No</button>
+                <button class="yesno-btn" data-value="10">Yes</button>
+              </div>
+            </div>
+          `;
+        }
+      })
+      .join("");
+
+    container.querySelectorAll(".scale-btn, .yesno-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const block = btn.closest(".question-block");
+        block.querySelectorAll(".scale-btn, .yesno-btn").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        block.dataset.answer = btn.dataset.value;
+        checkAllAnswered();
+      });
+    });
+  } catch (err) {
+    container.innerHTML = '<p class="subtitle">Could not load questions. Please refresh.</p>';
+    console.error("Failed to load questions:", err);
+  }
+}
+
+function checkAllAnswered() {
+  const blocks = document.querySelectorAll(".question-block");
+  const allAnswered = Array.from(blocks).every((b) => b.dataset.answer);
+  document.getElementById("submit-checkin").disabled = !allAnswered;
+}
+
+async function submitCheckIn() {
+  const btn = document.getElementById("submit-checkin");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+
+  const blocks = document.querySelectorAll(".question-block");
+  const answers = Array.from(blocks).map((b) => ({
+    questionId: parseInt(b.dataset.qid),
+    value: parseInt(b.dataset.answer),
+  }));
+
+  try {
+    const res = await authFetch(`${API}/api/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mood: selectedMood, note: noteInput.value }),
+      body: JSON.stringify({ sessionId: getSessionId(), answers }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       alert(data.error || "Something went wrong");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Send Check-in";
+      btn.disabled = false;
+      btn.textContent = "Submit Check-in";
       return;
     }
 
-    const checkinSection = document.getElementById("checkin");
-    checkinSection.innerHTML = `
+    document.getElementById("checkin").innerHTML = `
       <div class="success-message">
-        <p>Your check-in has been received. Thank you for reaching out.</p>
+        <p>Thank you for checking in. Here are some things that might help you right now.</p>
       </div>
     `;
 
-    if (data.exercise) {
-      showExercise(data.exercise);
-    } else {
-      fetchRandomExercise(selectedMood);
-    }
+    const resubmitBtn = document.getElementById("resubmit-checkin");
+    if (resubmitBtn) resubmitBtn.classList.remove("hidden");
+
+    loadDashboard();
+    loadRecommendations();
   } catch (err) {
     console.error("Check-in failed:", err);
     alert("Could not connect to server. Try again.");
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Send Check-in";
+    btn.disabled = false;
+    btn.textContent = "Submit Check-in";
   }
-});
+}
 
-// --- Fetch Exercise for Mood ---
-async function fetchRandomExercise(mood) {
+function resetBuddyState() {
+  stopBuddyPolling();
+  currentBuddyMatchId = null;
+  if (buddyConnection) {
+    buddyConnection.stop();
+    buddyConnection = null;
+  }
+
+  const findBtn = document.getElementById("find-buddy-btn");
+  const cancelBtn = document.getElementById("cancel-buddy-btn");
+  const chat = document.getElementById("buddy-chat");
+  const chatMessages = document.getElementById("buddy-chat-messages");
+  const status = document.getElementById("buddy-status");
+
+  if (findBtn) { findBtn.classList.remove("hidden"); findBtn.disabled = false; findBtn.textContent = "Find a Buddy"; }
+  if (cancelBtn) cancelBtn.classList.add("hidden");
+  if (chat) chat.classList.add("hidden");
+  if (chatMessages) chatMessages.innerHTML = "";
+  if (status) status.textContent = "";
+}
+
+async function resubmitCheckIn() {
   try {
-    const res = await authFetch(`${API}/api/exercises/${mood}`);
-    const exercises = await res.json();
+    await authFetch(`${API}/api/buddy/match/end`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: getSessionId() }),
+    });
+  } catch (err) {
+    console.error("Failed to end match:", err);
+  }
+
+  resetBuddyState();
+
+  document.getElementById("dashboard")?.classList.add("hidden");
+  document.getElementById("buddy-section")?.classList.add("hidden");
+
+  const resubmitBtn = document.getElementById("resubmit-checkin");
+  if (resubmitBtn) resubmitBtn.classList.add("hidden");
+
+  const checkin = document.getElementById("checkin");
+  checkin.classList.remove("hidden");
+  checkin.innerHTML = `
+    <h2>How are you doing right now?</h2>
+    <p class="subtitle">Answer a few quick questions. Your response is anonymous.</p>
+    <div id="questions-container"></div>
+    <button id="submit-checkin" class="primary-btn" disabled>Submit Check-in</button>
+    <div id="checkin-success" class="success-message hidden">
+      <p>Thank you for checking in. Here are some things that might help you right now.</p>
+    </div>
+    <button id="resubmit-checkin" class="secondary-btn hidden">Change My Answers</button>
+  `;
+
+  document.getElementById("submit-checkin").addEventListener("click", submitCheckIn);
+  document.getElementById("resubmit-checkin").addEventListener("click", resubmitCheckIn);
+  loadQuestions();
+  checkin.scrollIntoView({ behavior: "smooth" });
+}
+
+// --- Dashboard ---
+async function loadDashboard() {
+  const grid = document.getElementById("features-grid");
+  const dashboard = document.getElementById("dashboard");
+
+  grid.innerHTML = `
+    <div class="feature-card" id="feature-exercises">
+      <h3>Breathing & Grounding</h3>
+      <p>Exercises to calm your mind right now</p>
+      <button class="feature-btn" onclick="showExercisesSection()">Open</button>
+    </div>
+    <div class="feature-card" id="feature-buddy">
+      <h3>Buddy Chat</h3>
+      <p>Talk to someone who understands</p>
+      <button class="feature-btn" onclick="showBuddySection()">Find someone</button>
+    </div>
+    <div class="feature-card" id="feature-support">
+      <h3>Support Wall</h3>
+      <p>Read and send messages of support</p>
+      <button class="feature-btn" onclick="scrollToSection('support-wall')">Go there</button>
+    </div>
+  `;
+
+  dashboard.classList.remove("hidden");
+}
+
+async function loadRecommendations() {
+  try {
+    const res = await authFetch(`${API}/api/checkin/recommendations?sessionId=${getSessionId()}`);
+    const data = await res.json();
+
+    const featureMap = {
+      breathing: "feature-exercises",
+      grounding: "feature-exercises",
+      journal: "feature-buddy",
+      chat: "feature-support",
+      exercises: "feature-exercises",
+    };
+
+    data.features.forEach((f) => {
+      const id = featureMap[f];
+      if (id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("recommended");
+      }
+    });
+  } catch (err) {
+    console.error("Failed to load recommendations:", err);
+  }
+}
+
+function showExercisesSection() {
+  const section = document.getElementById("exercise-area");
+  section.classList.remove("hidden");
+  section.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("exercise-title").textContent = "Pick an exercise";
+  document.getElementById("exercise-instructions").textContent = "We will suggest one based on how you feel. Or choose from the list below.";
+  loadExercisesList();
+}
+
+function scrollToSection(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+// --- Exercises ---
+async function loadExercisesList() {
+  try {
+    const res = await authFetch(`${API}/api/checkin/recommendations?sessionId=${getSessionId()}`);
+    const data = await res.json();
+
+    const moodMap = {
+      breathing: "anxiety",
+      grounding: "anxiety",
+      exercises: "insomnia",
+    };
+
+    let moodType = "any";
+    for (const f of data.features) {
+      if (moodMap[f]) { moodType = moodMap[f]; break; }
+    }
+
+    const moodId = { anxiety: 2, insomnia: 5, loneliness: 4, low: 3 }[moodType] || 3;
+    const exRes = await authFetch(`${API}/api/exercises/${moodId}`);
+    const exercises = await exRes.json();
+
     if (exercises.length > 0) {
       showExercise(exercises[0]);
     }
   } catch (err) {
-    console.error("Failed to fetch exercise:", err);
+    console.error("Failed to load exercises:", err);
   }
 }
 
-// --- Show Exercise ---
 function showExercise(exercise) {
   activeExercise = exercise;
-  exerciseTitle.textContent = exercise.title;
-  exerciseInstructions.textContent = exercise.instructions;
-  exerciseTimer.classList.add("hidden");
-  startExerciseBtn.textContent = "Start Exercise";
-  startExerciseBtn.classList.remove("hidden");
-  exerciseArea.classList.remove("hidden");
-  exerciseArea.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("exercise-title").textContent = exercise.title;
+  document.getElementById("exercise-instructions").textContent = exercise.instructions;
+  document.getElementById("exercise-timer").classList.add("hidden");
+  document.getElementById("start-exercise").textContent = "Start Exercise";
+  document.getElementById("start-exercise").classList.remove("hidden");
+  document.getElementById("exercise-area").classList.remove("hidden");
+  document.getElementById("exercise-area").scrollIntoView({ behavior: "smooth" });
 }
 
-// --- Start Exercise Timer ---
-startExerciseBtn.addEventListener("click", () => {
+document.getElementById("start-exercise").addEventListener("click", () => {
   if (!activeExercise) return;
 
   let remaining = activeExercise.durationSeconds;
-  exerciseTimer.classList.remove("hidden");
-  startExerciseBtn.classList.add("hidden");
+  document.getElementById("exercise-timer").classList.remove("hidden");
+  document.getElementById("start-exercise").classList.add("hidden");
   updateTimerDisplay(remaining);
 
   timerInterval = setInterval(() => {
     remaining--;
     updateTimerDisplay(remaining);
-
     if (remaining <= 0) {
       clearInterval(timerInterval);
-      timerText.textContent = "Done";
-      startExerciseBtn.textContent = "Try Again";
-      startExerciseBtn.classList.remove("hidden");
+      document.getElementById("timer-text").textContent = "Done";
+      document.getElementById("start-exercise").textContent = "Try Again";
+      document.getElementById("start-exercise").classList.remove("hidden");
     }
   }, 1000);
 });
@@ -223,14 +445,196 @@ startExerciseBtn.addEventListener("click", () => {
 function updateTimerDisplay(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  timerText.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+  document.getElementById("timer-text").textContent = `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// --- Close Exercise ---
-closeExerciseBtn.addEventListener("click", () => {
+document.getElementById("close-exercise").addEventListener("click", () => {
   if (timerInterval) clearInterval(timerInterval);
-  exerciseArea.classList.add("hidden");
+  document.getElementById("exercise-area").classList.add("hidden");
   activeExercise = null;
+});
+
+// --- Buddy System ---
+async function showBuddySection() {
+  const section = document.getElementById("buddy-section");
+  section.classList.remove("hidden");
+  section.scrollIntoView({ behavior: "smooth" });
+
+  try {
+    const res = await authFetch(`${API}/api/buddy/match/active?sessionId=${getSessionId()}`);
+    const data = await res.json();
+
+    if (data.matched) {
+      currentBuddyMatchId = data.matchId;
+      document.getElementById("find-buddy-btn").classList.add("hidden");
+      document.getElementById("cancel-buddy-btn").classList.add("hidden");
+      document.getElementById("buddy-status").textContent = "You're connected with a buddy. Say hello below.";
+      document.getElementById("buddy-chat").classList.remove("hidden");
+      loadBuddyMessages(data.matchId);
+      connectBuddyChat(data.matchId);
+    }
+  } catch (err) {
+    console.error("Failed to check active match:", err);
+  }
+}
+
+document.getElementById("find-buddy-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("find-buddy-btn");
+  const cancelBtn = document.getElementById("cancel-buddy-btn");
+  const status = document.getElementById("buddy-status");
+
+  btn.disabled = true;
+  btn.textContent = "Joining queue...";
+  status.textContent = "Looking for someone who feels similar to you...";
+
+  try {
+    const res = await authFetch(`${API}/api/buddy/queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: getSessionId() }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      status.textContent = data.error || "Could not join the queue.";
+      btn.disabled = false;
+      btn.textContent = "Find a Buddy";
+      return;
+    }
+
+    btn.classList.add("hidden");
+    cancelBtn.classList.remove("hidden");
+    status.textContent = "Searching... You'll be matched as soon as someone compatible joins.";
+
+    startBuddyPolling();
+  } catch (err) {
+    console.error("Failed to join queue:", err);
+    status.textContent = "Could not connect to server. Try again.";
+    btn.disabled = false;
+    btn.textContent = "Find a Buddy";
+  }
+});
+
+document.getElementById("cancel-buddy-btn").addEventListener("click", async () => {
+  stopBuddyPolling();
+
+  const btn = document.getElementById("find-buddy-btn");
+  const cancelBtn = document.getElementById("cancel-buddy-btn");
+  const status = document.getElementById("buddy-status");
+
+  try {
+    await authFetch(`${API}/api/buddy/queue`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: getSessionId() }),
+    });
+  } catch (err) {
+    console.error("Failed to leave queue:", err);
+  }
+
+  cancelBtn.classList.add("hidden");
+  btn.classList.remove("hidden");
+  btn.disabled = false;
+  btn.textContent = "Find a Buddy";
+  status.textContent = "Search cancelled.";
+});
+
+function startBuddyPolling() {
+  stopBuddyPolling();
+  buddyQueueInterval = setInterval(checkBuddyMatch, 2000);
+}
+
+function stopBuddyPolling() {
+  if (buddyQueueInterval) {
+    clearInterval(buddyQueueInterval);
+    buddyQueueInterval = null;
+  }
+}
+
+async function checkBuddyMatch() {
+  try {
+    const res = await authFetch(`${API}/api/buddy/queue/check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: getSessionId() }),
+    });
+
+    const data = await res.json();
+
+    if (data.matched) {
+      stopBuddyPolling();
+
+      currentBuddyMatchId = data.matchId;
+      const status = document.getElementById("buddy-status");
+      status.textContent = "You've been matched! Say hello below.";
+
+      document.getElementById("find-buddy-btn").classList.add("hidden");
+      document.getElementById("cancel-buddy-btn").classList.add("hidden");
+      document.getElementById("buddy-chat").classList.remove("hidden");
+      loadBuddyMessages(data.matchId);
+      connectBuddyChat(data.matchId);
+    } else if (!data.queued) {
+      stopBuddyPolling();
+      resetBuddyState();
+    }
+  } catch (err) {
+    console.error("Buddy check failed:", err);
+  }
+}
+
+async function loadBuddyMessages(matchId) {
+  try {
+    const res = await authFetch(`${API}/api/buddy/messages/${matchId}`);
+    const messages = await res.json();
+    const container = document.getElementById("buddy-chat-messages");
+    container.innerHTML = "";
+
+    messages.forEach((m) => {
+      const isMe = m.senderSessionId === getSessionId();
+      const msgHtml = `
+        <div class="buddy-message ${isMe ? "buddy-message-me" : "buddy-message-them"}">
+          <p>${escapeHtml(m.text)}</p>
+          <div class="message-time">${timeAgo(m.sentAt)}</div>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", msgHtml);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    console.error("Failed to load buddy messages:", err);
+  }
+}
+
+document.getElementById("buddy-send-btn").addEventListener("click", async () => {
+  const input = document.getElementById("buddy-chat-input");
+  const text = input.value.trim();
+  if (!text || !currentBuddyMatchId || !buddyConnection) return;
+
+  try {
+    await buddyConnection.invoke("SendBuddyMessage", currentBuddyMatchId, getSessionId(), text);
+    input.value = "";
+  } catch (err) {
+    console.error("Failed to send buddy message:", err);
+  }
+});
+
+document.getElementById("leave-buddy-btn").addEventListener("click", async () => {
+  if (!currentBuddyMatchId) return;
+
+  try {
+    await authFetch(`${API}/api/buddy/match/end`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: getSessionId() }),
+    });
+  } catch (err) {
+    console.error("Failed to leave chat:", err);
+  }
+
+  resetBuddyState();
+  document.getElementById("buddy-status").textContent = "You left the chat.";
 });
 
 // --- Support Wall Messages ---
@@ -245,13 +649,14 @@ async function loadMessages() {
 }
 
 function renderMessages(messages) {
+  const container = document.getElementById("messages-container");
   if (messages.length === 0) {
-    messagesContainer.innerHTML =
+    container.innerHTML =
       '<p style="color:#4a4260;text-align:center;padding:1rem;">No messages yet. Be the first to share support.</p>';
     return;
   }
 
-  messagesContainer.innerHTML = messages
+  container.innerHTML = messages
     .map(
       (msg) => `
     <div class="message-item">
@@ -264,11 +669,13 @@ function renderMessages(messages) {
 }
 
 // --- Send Message ---
-sendMessageBtn.addEventListener("click", async () => {
-  const content = messageInput.value.trim();
+document.getElementById("send-message").addEventListener("click", async () => {
+  const input = document.getElementById("message-input");
+  const content = input.value.trim();
   if (!content) return;
 
-  sendMessageBtn.disabled = true;
+  const btn = document.getElementById("send-message");
+  btn.disabled = true;
 
   try {
     const res = await authFetch(`${API}/api/support/messages`, {
@@ -278,7 +685,7 @@ sendMessageBtn.addEventListener("click", async () => {
     });
 
     if (res.ok) {
-      messageInput.value = "";
+      input.value = "";
       loadMessages();
     } else {
       const data = await res.json();
@@ -289,8 +696,83 @@ sendMessageBtn.addEventListener("click", async () => {
     alert("Could not connect to server");
   }
 
-  sendMessageBtn.disabled = false;
+  btn.disabled = false;
 });
+
+// --- Crisis Hotlines (from backend) ---
+async function loadRegionalCrisis() {
+  let region = "DEFAULT";
+
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    if (res.ok) {
+      const data = await res.json();
+      region = data.country_code || "DEFAULT";
+    }
+  } catch {}
+
+  try {
+    const res = await authFetch(`${API}/api/hotlines/${region}`);
+    const hotlines = await res.json();
+    renderCrisisFromBackend(hotlines, region);
+  } catch {
+    renderCrisisFallback(region);
+  }
+}
+
+function renderCrisisFromBackend(hotlines, region) {
+  const label = { US: "United States", GB: "United Kingdom", RO: "Romania", DE: "Germany", FR: "France", ES: "Spain", IT: "Italy", JP: "Japan", AU: "Australia", CA: "Canada", BR: "Brazil", IN: "India", PL: "Poland" }[region] || "your region";
+
+  const crisisLabel = document.getElementById("crisis-region-label");
+  const crisisList = document.getElementById("crisis-list");
+  const helpPanelRegion = document.getElementById("help-panel-region");
+  const helpPanelList = document.getElementById("help-panel-list");
+
+  const html = hotlines
+    .map((l) => {
+      if (l.type === "web") {
+        return `<li><strong>${escapeHtml(l.name)}</strong> - <a href="${l.number}" target="_blank" rel="noopener">Find local help</a></li>`;
+      }
+      const prefix = l.prefix || "";
+      return `<li><strong>${escapeHtml(l.name)}</strong> - ${prefix}<a href="tel:${l.number.replace(/\s/g, "")}">${escapeHtml(l.number)}</a></li>`;
+    })
+    .join("");
+
+  crisisLabel.textContent = `Resources for ${label}:`;
+  crisisList.innerHTML = html;
+  helpPanelRegion.textContent = `Resources for ${label}:`;
+  helpPanelList.innerHTML = html;
+}
+
+function renderCrisisFallback(region) {
+  const crisisLabel = document.getElementById("crisis-region-label");
+  const crisisList = document.getElementById("crisis-list");
+  const helpPanelRegion = document.getElementById("help-panel-region");
+  const helpPanelList = document.getElementById("help-panel-list");
+
+  const html = `
+    <li><strong>International Association for Suicide Prevention</strong> - <a href="https://www.iasp.info/resources/Crisis_Centres/" target="_blank" rel="noopener">Find local help</a></li>
+    <li><strong>Emergency (EU)</strong> - <a href="tel:112">112</a></li>
+  `;
+
+  crisisLabel.textContent = "Resources for your region:";
+  crisisList.innerHTML = html;
+  helpPanelRegion.textContent = "Resources for your region:";
+  helpPanelList.innerHTML = html;
+}
+
+// --- Floating Help Button ---
+function initHelpButton() {
+  const fab = document.getElementById("help-fab");
+  const panel = document.getElementById("help-panel");
+  const closeBtn = document.getElementById("close-help-panel");
+
+  fab.addEventListener("click", () => panel.classList.toggle("hidden"));
+  closeBtn.addEventListener("click", () => panel.classList.add("hidden"));
+  document.addEventListener("click", (e) => {
+    if (!panel.contains(e.target) && e.target !== fab) panel.classList.add("hidden");
+  });
+}
 
 // --- Helpers ---
 function escapeHtml(text) {
@@ -300,7 +782,7 @@ function escapeHtml(text) {
 }
 
 function timeAgo(dateStr) {
-  const date = new Date(dateStr + "Z");
+  const date = new Date(dateStr.includes("Z") ? dateStr : dateStr + "Z");
   const now = new Date();
   const diffMs = now - date;
   const diffMin = Math.floor(diffMs / 60000);
@@ -313,193 +795,13 @@ function timeAgo(dateStr) {
 }
 
 // --- Init ---
+document.getElementById("submit-checkin").addEventListener("click", submitCheckIn);
+document.getElementById("resubmit-checkin").addEventListener("click", resubmitCheckIn);
+
 initUserStatus();
 connectSignalR();
+loadQuestions();
 loadMessages();
 setInterval(loadMessages, 30000);
 initHelpButton();
 loadRegionalCrisis();
-
-// --- Crisis Numbers by Region ---
-const CRISIS_DATA = {
-  US: {
-    label: "United States",
-    lines: [
-      { name: "988 Suicide & Crisis Lifeline", number: "988", type: "tel" },
-      { name: "Crisis Text Line", number: "741741", type: "sms", prefix: "Text HOME to " },
-      { name: "SAMHSA Helpline", number: "1-800-662-4357", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "911", type: "tel" },
-  },
-  GB: {
-    label: "United Kingdom",
-    lines: [
-      { name: "Samaritans", number: "116 123", type: "tel" },
-      { name: "Shout Crisis Text", number: "85258", type: "sms", prefix: "Text SHOUT to " },
-      { name: "Mind Infoline", number: "0300 123 3393", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "999", type: "tel" },
-  },
-  RO: {
-    label: "Romania",
-    lines: [
-      { name: "Telefonul Sperantei", number: "0800 820 020", type: "tel" },
-      { name: "Lifeline Romania", number: "0800 800 111", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  DE: {
-    label: "Germany",
-    lines: [
-      { name: "Telefonseelsorge", number: "0800 111 0 111", type: "tel" },
-      { name: "Telefonseelsorge (alternative)", number: "0800 111 0 222", type: "tel" },
-      { name: "Nummer gegen Kummer", number: "116 123", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  FR: {
-    label: "France",
-    lines: [
-      { name: "SOS Amitie", number: "09 72 39 40 50", type: "tel" },
-      { name: "Fil Santé Jeunes", number: "0 800 235 236", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  ES: {
-    label: "Spain",
-    lines: [
-      { name: "Teléfono de la Esperanza", number: "717 000 078", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  IT: {
-    label: "Italy",
-    lines: [
-      { name: "Telefono Amico", number: "02 2327 2327", type: "tel" },
-      { name: "Telefono Azzurro", number: "19696", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  JP: {
-    label: "Japan",
-    lines: [
-      { name: "TELL Lifeline", number: "03-5774-0992", type: "tel" },
-      { name: "Yorisoi Hotline", number: "0120-279-338", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "119", type: "tel" },
-  },
-  AU: {
-    label: "Australia",
-    lines: [
-      { name: "Lifeline Australia", number: "13 11 14", type: "tel" },
-      { name: "Kids Helpline", number: "1800 55 1800", type: "tel" },
-      { name: "Beyond Blue", number: "1300 22 4636", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "000", type: "tel" },
-  },
-  CA: {
-    label: "Canada",
-    lines: [
-      { name: "Talk Suicide Canada", number: "1-833-456-4566", type: "tel" },
-      { name: "Crisis Text Line", number: "45645", type: "sms", prefix: "Text HOME to " },
-    ],
-    emergency: { name: "Emergency", number: "911", type: "tel" },
-  },
-  BR: {
-    label: "Brazil",
-    lines: [
-      { name: "CVV (Life Valuation)", number: "188", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "192", type: "tel" },
-  },
-  IN: {
-    label: "India",
-    lines: [
-      { name: "iCall", number: "9152987821", type: "tel" },
-      { name: "AASRA", number: "9820466726", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  PL: {
-    label: "Poland",
-    lines: [
-      { name: "Centrum Wsparcia", number: "800 70 2222", type: "tel" },
-      { name: "Phone Crisis", number: "116 123", type: "tel" },
-    ],
-    emergency: { name: "Emergency", number: "112", type: "tel" },
-  },
-  DEFAULT: {
-    label: "International",
-    lines: [
-      { name: "Befrienders Worldwide", number: "https://www.befrienders.org", type: "web" },
-      { name: "International Association for Suicide Prevention", number: "https://www.iasp.info/resources/Crisis_Centres/", type: "web" },
-    ],
-    emergency: { name: "Emergency (EU)", number: "112", type: "tel" },
-  },
-};
-
-function getRegionLines(region) {
-  const data = CRISIS_DATA[region] || CRISIS_DATA.DEFAULT;
-  const all = [...data.lines];
-  if (data.emergency) all.push(data.emergency);
-  return { label: data.label, lines: all };
-}
-
-function renderCrisisList(container, lines) {
-  container.innerHTML = lines
-    .map((l) => {
-      if (l.type === "web") {
-        return `<li><strong>${l.name}</strong> - <a href="${l.number}" target="_blank" rel="noopener">Find local help</a></li>`;
-      }
-      const prefix = l.prefix || "";
-      return `<li><strong>${l.name}</strong> - ${prefix}<a href="tel:${l.number.replace(/\s/g, "")}">${l.number}</a></li>`;
-    })
-    .join("");
-}
-
-// --- Region Detection & Crisis Loading ---
-async function loadRegionalCrisis() {
-  let region = "DEFAULT";
-
-  try {
-    const res = await fetch("https://ipapi.co/json/");
-    if (res.ok) {
-      const data = await res.json();
-      region = data.country_code || "DEFAULT";
-    }
-  } catch {}
-
-  const { label, lines } = getRegionLines(region);
-
-  const crisisLabel = document.getElementById("crisis-region-label");
-  const crisisList = document.getElementById("crisis-list");
-  const helpPanelRegion = document.getElementById("help-panel-region");
-  const helpPanelList = document.getElementById("help-panel-list");
-
-  crisisLabel.textContent = `Resources for ${label}:`;
-  renderCrisisList(crisisList, lines);
-
-  helpPanelRegion.textContent = `Resources for ${label}:`;
-  renderCrisisList(helpPanelList, lines);
-}
-
-// --- Floating Help Button ---
-function initHelpButton() {
-  const fab = document.getElementById("help-fab");
-  const panel = document.getElementById("help-panel");
-  const closeBtn = document.getElementById("close-help-panel");
-
-  fab.addEventListener("click", () => {
-    panel.classList.toggle("hidden");
-  });
-
-  closeBtn.addEventListener("click", () => {
-    panel.classList.add("hidden");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!panel.contains(e.target) && e.target !== fab) {
-      panel.classList.add("hidden");
-    }
-  });
-}

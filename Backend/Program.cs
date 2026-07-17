@@ -2,15 +2,15 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Crepuscul.Api.Data;
-using Crepuscul.Api.Hubs;
-using Crepuscul.Api.Models;
+using Afterglow.Api.Data;
+using Afterglow.Api.Hubs;
+using Afterglow.Api.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=crepuscul.db"));
+    options.UseSqlite("Data Source=afterglow.db"));
 
 builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -78,8 +78,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.MapControllers();
 app.MapHub<SupportHub>("/hubs/support");
+app.MapHub<BuddyChatHub>("/hubs/buddy");
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok", message = "Crepuscul is running" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok", message = "Afterglow is running" }));
 
 app.MapGet("/", () => Results.Redirect("/login.html"));
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace Crepuscul.Api.Hubs;
+namespace Afterglow.Api.Hubs;
 
 public class SupportHub : Hub
 {

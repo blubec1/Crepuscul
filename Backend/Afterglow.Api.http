@@ -1,0 +1,6 @@
+@Afterglow.Api_HostAddress = http://localhost:5042
+
+GET {{Afterglow.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

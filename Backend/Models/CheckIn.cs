@@ -1,4 +1,4 @@
-namespace Crepuscul.Api.Models;
+namespace Afterglow.Api.Models;
 
 public class CheckIn
 {
