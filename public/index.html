@@ -66,14 +66,56 @@
       </div>
     </section>
 
-    <!-- Support Wall -->
-    <section id="support-wall" class="card">
-      <h2>Support Wall</h2>
-      <p class="subtitle">Messages from others who are awake right now</p>
-      <div id="messages-container"></div>
-      <div id="message-form">
-        <textarea id="message-input" placeholder="Send an anonymous message of support..." maxlength="500"></textarea>
-        <button id="send-message" class="primary-btn">Send</button>
+    <!-- Pen Pal -->
+    <section id="penpal-section" class="card hidden">
+      <!-- Alias Setup -->
+      <div id="penpal-alias-setup" class="hidden">
+        <h2>Create Your Anonymous Alias</h2>
+        <p class="subtitle">Choose a name that others will see. This is not your username.</p>
+        <div id="penpal-alias-form">
+          <input type="text" id="penpal-alias-input" placeholder="e.g. MidnightOwl_42" maxlength="30" />
+          <button id="penpal-alias-btn" class="primary-btn">Create Alias</button>
+        </div>
+        <p id="penpal-alias-error" class="error-text hidden"></p>
+      </div>
+
+      <!-- Inbox View -->
+      <div id="penpal-inbox" class="hidden">
+        <div class="penpal-header">
+          <h2>Your Inbox</h2>
+          <button id="penpal-new-msg-btn" class="primary-btn penpal-action-btn">New Message</button>
+        </div>
+        <p class="subtitle">Messages from random pen pals</p>
+        <div id="penpal-inbox-list"></div>
+      </div>
+
+      <!-- Thread View -->
+      <div id="penpal-thread" class="hidden">
+        <div class="penpal-header">
+          <button id="penpal-back-btn" class="secondary-btn penpal-back-btn">Back to Inbox</button>
+          <span id="penpal-thread-peer" class="penpal-peer-name"></span>
+        </div>
+        <div id="penpal-thread-messages"></div>
+        <div id="penpal-thread-form" class="hidden">
+          <textarea id="penpal-thread-input" placeholder="Write a reply..." maxlength="500"></textarea>
+          <div class="penpal-thread-actions">
+            <button id="penpal-reply-btn" class="primary-btn">Send Reply</button>
+            <span id="penpal-thread-limit" class="subtitle"></span>
+          </div>
+        </div>
+        <p id="penpal-thread-closed" class="subtitle hidden">This conversation has ended.</p>
+      </div>
+
+      <!-- Compose View -->
+      <div id="penpal-compose" class="hidden">
+        <div class="penpal-header">
+          <button id="penpal-compose-back-btn" class="secondary-btn penpal-back-btn">Back to Inbox</button>
+          <h2>New Message</h2>
+        </div>
+        <p class="subtitle">Your message will be sent to a random person. You won't know who.</p>
+        <textarea id="penpal-compose-input" placeholder="Write something kind..." maxlength="500"></textarea>
+        <button id="penpal-send-btn" class="primary-btn">Send to Random Person</button>
+        <p id="penpal-compose-error" class="error-text hidden"></p>
       </div>
     </section>
 

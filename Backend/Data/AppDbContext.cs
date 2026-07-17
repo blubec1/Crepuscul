@@ -16,6 +16,9 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<BuddyMessage> BuddyMessages => Set<BuddyMessage>();
     public DbSet<BuddyQueue> BuddyQueues => Set<BuddyQueue>();
     public DbSet<CrisisHotline> CrisisHotlines => Set<CrisisHotline>();
+    public DbSet<PenPalProfile> PenPalProfiles => Set<PenPalProfile>();
+    public DbSet<PenPalThread> PenPalThreads => Set<PenPalThread>();
+    public DbSet<PenPalMessage> PenPalMessages => Set<PenPalMessage>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -45,6 +48,20 @@ public class AppDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<CrisisHotline>()
             .HasIndex(h => h.RegionCode);
+
+        modelBuilder.Entity<PenPalProfile>()
+            .HasIndex(p => p.UserId)
+            .IsUnique();
+
+        modelBuilder.Entity<PenPalProfile>()
+            .HasIndex(p => p.Alias)
+            .IsUnique();
+
+        modelBuilder.Entity<PenPalMessage>()
+            .HasIndex(m => m.ThreadId);
+
+        modelBuilder.Entity<PenPalMessage>()
+            .HasIndex(m => m.IsRead);
 
         // Seed exercises
         modelBuilder.Entity<Exercise>().HasData(

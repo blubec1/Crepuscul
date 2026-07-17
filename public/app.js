@@ -85,34 +85,8 @@ function initUserStatus() {
   });
 }
 
-// --- SignalR (Support Wall) ---
+// --- SignalR (Pen Pal - disabled, using REST polling) ---
 async function connectSignalR() {
-  if (typeof signalR === "undefined") return;
-
-  signalRConnection = new signalR.HubConnectionBuilder()
-    .withUrl(`${API}/hubs/support`, {
-      accessTokenFactory: () => getAuthToken() || null,
-    })
-    .withAutomaticReconnect()
-    .build();
-
-  signalRConnection.on("ReceiveMessage", (username, content, timestamp) => {
-    const container = document.getElementById("messages-container");
-    const msgHtml = `
-      <div class="message-item">
-        <p>${escapeHtml(content)} <span class="message-user">- ${escapeHtml(username)}</span></p>
-        <div class="message-time">${timeAgo(timestamp)}</div>
-      </div>
-    `;
-    container.insertAdjacentHTML("afterbegin", msgHtml);
-  });
-
-  try {
-    await signalRConnection.start();
-    console.log("SignalR support wall connected");
-  } catch (err) {
-    console.error("SignalR connection failed:", err);
-  }
 }
 
 // --- SignalR (Buddy Chat) ---
@@ -335,9 +309,9 @@ async function loadDashboard() {
       <button class="feature-btn" onclick="showBuddySection()">Find someone</button>
     </div>
     <div class="feature-card" id="feature-support">
-      <h3>Support Wall</h3>
-      <p>Read and send messages of support</p>
-      <button class="feature-btn" onclick="scrollToSection('support-wall')">Go there</button>
+      <h3>Pen Pal</h3>
+      <p>Send and receive messages from random people</p>
+      <button class="feature-btn" onclick="scrollToSection('penpal-section')">Go there</button>
     </div>
   `;
 
@@ -637,48 +611,264 @@ document.getElementById("leave-buddy-btn").addEventListener("click", async () =>
   document.getElementById("buddy-status").textContent = "You left the chat.";
 });
 
-// --- Support Wall Messages ---
-async function loadMessages() {
+// --- Pen Pal System ---
+let penpalCurrentView = "inbox";
+let penpalCurrentThreadId = null;
+let penpalPollInterval = null;
+
+function initPenPal() {
+  document.getElementById("penpal-section").classList.remove("hidden");
+  if (!isLoggedIn()) {
+    document.getElementById("penpal-alias-setup").classList.remove("hidden");
+    document.getElementById("penpal-alias-setup").innerHTML = `
+      <h2>Pen Pal</h2>
+      <p class="subtitle">Send and receive anonymous messages from random people</p>
+      <p style="color:#6b5f82;margin-bottom:1rem;">You need an account to use the pen pal feature.</p>
+      <button class="primary-btn" onclick="window.location.href='/login.html'">Sign In</button>
+    `;
+    return;
+  }
+  checkPenPalAlias();
+}
+
+async function checkPenPalAlias() {
   try {
-    const res = await authFetch(`${API}/api/support/messages`);
-    const messages = await res.json();
-    renderMessages(messages);
+    const res = await authFetch(`${API}/api/penpal/profile`);
+    const data = await res.json();
+    if (data.alias) {
+      showPenPalInbox();
+    } else {
+      showPenPalAliasSetup();
+    }
   } catch (err) {
-    console.error("Failed to load messages:", err);
+    console.error("Failed to check alias:", err);
   }
 }
 
-function renderMessages(messages) {
-  const container = document.getElementById("messages-container");
-  if (messages.length === 0) {
-    container.innerHTML =
-      '<p style="color:#4a4260;text-align:center;padding:1rem;">No messages yet. Be the first to share support.</p>';
+function showPenPalAliasSetup() {
+  document.getElementById("penpal-alias-setup").classList.remove("hidden");
+  document.getElementById("penpal-inbox").classList.add("hidden");
+  document.getElementById("penpal-thread").classList.add("hidden");
+  document.getElementById("penpal-compose").classList.add("hidden");
+  document.getElementById("penpal-alias-input").value = "";
+  document.getElementById("penpal-alias-error").classList.add("hidden");
+}
+
+function showPenPalInbox() {
+  document.getElementById("penpal-alias-setup").classList.add("hidden");
+  document.getElementById("penpal-inbox").classList.remove("hidden");
+  document.getElementById("penpal-thread").classList.add("hidden");
+  document.getElementById("penpal-compose").classList.add("hidden");
+  penpalCurrentView = "inbox";
+  loadPenPalInbox();
+  startPenPalPolling();
+}
+
+function showPenPalThread(threadId) {
+  document.getElementById("penpal-alias-setup").classList.add("hidden");
+  document.getElementById("penpal-inbox").classList.add("hidden");
+  document.getElementById("penpal-thread").classList.remove("hidden");
+  document.getElementById("penpal-compose").classList.add("hidden");
+  penpalCurrentView = "thread";
+  penpalCurrentThreadId = threadId;
+  loadPenPalThread(threadId);
+}
+
+function showPenPalCompose() {
+  document.getElementById("penpal-alias-setup").classList.add("hidden");
+  document.getElementById("penpal-inbox").classList.add("hidden");
+  document.getElementById("penpal-thread").classList.add("hidden");
+  document.getElementById("penpal-compose").classList.remove("hidden");
+  document.getElementById("penpal-compose-input").value = "";
+  document.getElementById("penpal-compose-error").classList.add("hidden");
+  penpalCurrentView = "compose";
+}
+
+document.getElementById("penpal-alias-btn").addEventListener("click", async () => {
+  const input = document.getElementById("penpal-alias-input");
+  const error = document.getElementById("penpal-alias-error");
+  const alias = input.value.trim();
+  if (!alias || alias.length < 2) {
+    error.textContent = "Alias must be at least 2 characters";
+    error.classList.remove("hidden");
     return;
   }
 
-  container.innerHTML = messages
-    .map(
-      (msg) => `
-    <div class="message-item">
-      <p>${escapeHtml(msg.content)}</p>
-      <div class="message-time">${timeAgo(msg.created_at)}</div>
-    </div>
-  `
-    )
-    .join("");
+  const btn = document.getElementById("penpal-alias-btn");
+  btn.disabled = true;
+  btn.textContent = "Creating...";
+
+  try {
+    const res = await authFetch(`${API}/api/penpal/profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ alias }),
+    });
+
+    if (res.ok) {
+      showPenPalInbox();
+    } else {
+      const data = await res.json();
+      error.textContent = data.error || "Could not create alias";
+      error.classList.remove("hidden");
+    }
+  } catch (err) {
+    error.textContent = "Could not connect to server";
+    error.classList.remove("hidden");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Create Alias";
+});
+
+async function loadPenPalInbox() {
+  try {
+    const res = await authFetch(`${API}/api/penpal/inbox`);
+    const data = await res.json();
+    renderPenPalInbox(data.threads);
+  } catch (err) {
+    console.error("Failed to load inbox:", err);
+  }
 }
 
-// --- Send Message ---
-document.getElementById("send-message").addEventListener("click", async () => {
-  const input = document.getElementById("message-input");
+function renderPenPalInbox(threads) {
+  const container = document.getElementById("penpal-inbox-list");
+  if (!threads || threads.length === 0) {
+    container.innerHTML = '<p style="color:#6b5f82;text-align:center;padding:1.5rem;">No conversations yet. Send a message to a random person!</p>';
+    return;
+  }
+
+  container.innerHTML = threads.map((t) => {
+    const preview = t.lastMessage ? escapeHtml(t.lastMessage) : "No messages yet";
+    const time = t.lastMessageAt ? timeAgo(t.lastMessageAt) : "";
+    const unread = t.unreadCount > 0 ? `<span class="penpal-unread-badge">${t.unreadCount}</span>` : "";
+    const closedClass = t.isClosed ? " penpal-thread-closed-item" : "";
+    const myMsgCount = Math.min(t.messageCount, 4);
+    return `
+      <div class="penpal-inbox-item${closedClass}" data-thread-id="${t.threadId}">
+        <div class="penpal-inbox-header">
+          <span class="penpal-inbox-peer">with ${escapeHtml(t.peerAlias)}</span>
+          ${unread}
+        </div>
+        <p class="penpal-inbox-preview">${preview}</p>
+        <div class="penpal-inbox-footer">
+          <span class="penpal-inbox-time">${time}</span>
+          <span class="penpal-inbox-count">${myMsgCount}/4 messages</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".penpal-inbox-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      showPenPalThread(parseInt(item.dataset.threadId));
+    });
+  });
+}
+
+async function loadPenPalThread(threadId) {
+  try {
+    const res = await authFetch(`${API}/api/penpal/thread/${threadId}`);
+    const data = await res.json();
+    renderPenPalThread(data);
+  } catch (err) {
+    console.error("Failed to load thread:", err);
+  }
+}
+
+function renderPenPalThread(data) {
+  document.getElementById("penpal-thread-peer").textContent = `with ${data.peerAlias}`;
+  const container = document.getElementById("penpal-thread-messages");
+
+  if (!data.messages || data.messages.length === 0) {
+    container.innerHTML = '<p style="color:#6b5f82;text-align:center;padding:1.5rem;">No messages yet.</p>';
+    return;
+  }
+
+  container.innerHTML = data.messages.map((m) => {
+    const isMe = m.senderAlias === data.peerAlias ? false : true;
+    return `
+      <div class="penpal-message penpal-message-${isMe ? 'me' : 'them'}">
+        <p>${escapeHtml(m.content)}</p>
+        <div class="message-time">${escapeHtml(m.senderAlias)} &middot; ${timeAgo(m.createdAt)}</div>
+      </div>
+    `;
+  }).join("");
+
+  container.scrollTop = container.scrollHeight;
+
+  if (data.isClosed) {
+    document.getElementById("penpal-thread-form").classList.add("hidden");
+    document.getElementById("penpal-thread-closed").classList.remove("hidden");
+  } else {
+    document.getElementById("penpal-thread-form").classList.remove("hidden");
+    document.getElementById("penpal-thread-closed").classList.add("hidden");
+  }
+}
+
+document.getElementById("penpal-back-btn").addEventListener("click", () => {
+  showPenPalInbox();
+});
+
+document.getElementById("penpal-new-msg-btn").addEventListener("click", () => {
+  showPenPalCompose();
+});
+
+document.getElementById("penpal-compose-back-btn").addEventListener("click", () => {
+  showPenPalInbox();
+});
+
+document.getElementById("penpal-send-btn").addEventListener("click", async () => {
+  const input = document.getElementById("penpal-compose-input");
+  const error = document.getElementById("penpal-compose-error");
+  const content = input.value.trim();
+  if (!content) {
+    error.textContent = "Message cannot be empty";
+    error.classList.remove("hidden");
+    return;
+  }
+
+  const btn = document.getElementById("penpal-send-btn");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  try {
+    const res = await authFetch(`${API}/api/penpal/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      showPenPalThread(data.threadId);
+    } else {
+      const data = await res.json();
+      error.textContent = data.error || "Could not send message";
+      error.classList.remove("hidden");
+    }
+  } catch (err) {
+    error.textContent = "Could not connect to server";
+    error.classList.remove("hidden");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Send to Random Person";
+});
+
+document.getElementById("penpal-reply-btn").addEventListener("click", async () => {
+  if (!penpalCurrentThreadId) return;
+
+  const input = document.getElementById("penpal-thread-input");
   const content = input.value.trim();
   if (!content) return;
 
-  const btn = document.getElementById("send-message");
+  const btn = document.getElementById("penpal-reply-btn");
   btn.disabled = true;
+  btn.textContent = "Sending...";
 
   try {
-    const res = await authFetch(`${API}/api/support/messages`, {
+    const res = await authFetch(`${API}/api/penpal/reply/${penpalCurrentThreadId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
@@ -686,18 +876,33 @@ document.getElementById("send-message").addEventListener("click", async () => {
 
     if (res.ok) {
       input.value = "";
-      loadMessages();
+      loadPenPalThread(penpalCurrentThreadId);
     } else {
       const data = await res.json();
-      alert(data.error || "Could not send message");
+      alert(data.error || "Could not send reply");
     }
   } catch (err) {
-    console.error("Send failed:", err);
     alert("Could not connect to server");
   }
 
   btn.disabled = false;
+  btn.textContent = "Send Reply";
 });
+
+function startPenPalPolling() {
+  stopPenPalPolling();
+  penpalPollInterval = setInterval(() => {
+    if (penpalCurrentView === "inbox") loadPenPalInbox();
+    else if (penpalCurrentView === "thread" && penpalCurrentThreadId) loadPenPalThread(penpalCurrentThreadId);
+  }, 5000);
+}
+
+function stopPenPalPolling() {
+  if (penpalPollInterval) {
+    clearInterval(penpalPollInterval);
+    penpalPollInterval = null;
+  }
+}
 
 // --- Crisis Hotlines (from backend) ---
 async function loadRegionalCrisis() {
@@ -801,7 +1006,6 @@ document.getElementById("resubmit-checkin").addEventListener("click", resubmitCh
 initUserStatus();
 connectSignalR();
 loadQuestions();
-loadMessages();
-setInterval(loadMessages, 30000);
+initPenPal();
 initHelpButton();
 loadRegionalCrisis();

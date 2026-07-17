@@ -265,47 +265,212 @@ textarea::placeholder {
   50% { box-shadow: 0 0 20px 5px rgba(124, 92, 191, 0.15); }
 }
 
-/* Support Wall */
-#messages-container {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 1rem;
+/* Pen Pal */
+.penpal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
 }
 
-.message-item {
-  background: #1e1a35;
-  border-left: 3px solid #4a3f6b;
-  border-radius: 0 8px 8px 0;
-  padding: 0.8rem 1rem;
-  margin-bottom: 0.6rem;
+.penpal-action-btn {
+  width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  margin-left: auto;
 }
 
-.message-item p {
+.penpal-back-btn {
+  width: auto;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.penpal-peer-name {
+  color: #a78bfa;
   font-size: 0.9rem;
-  color: #c8c0d8;
+  font-weight: 500;
 }
 
-.message-item .message-time {
-  font-size: 0.75rem;
-  color: #4a4260;
-  margin-top: 0.3rem;
-}
-
-#message-form {
+#penpal-alias-form {
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
 }
 
-#message-form textarea {
+#penpal-alias-form input {
   flex: 1;
-  min-height: 50px;
+  background: #1e1a35;
+  border: 1px solid #2a2445;
+  border-radius: 8px;
+  color: #c8c0d8;
+  padding: 0.7rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+#penpal-alias-form input:focus {
+  outline: none;
+  border-color: #7c5cbf;
+}
+
+#penpal-alias-form .primary-btn {
+  width: auto;
+  padding: 0.7rem 1.2rem;
+  margin: 0;
+}
+
+.penpal-inbox-item {
+  background: #1e1a35;
+  border: 1px solid #2a2445;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.penpal-inbox-item:hover {
+  border-color: #7c5cbf;
+  background: #221e3a;
+}
+
+.penpal-thread-closed-item {
+  opacity: 0.6;
+}
+
+.penpal-inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.penpal-inbox-peer {
+  color: #c4b5fd;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.penpal-unread-badge {
+  background: #7c5cbf;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.penpal-inbox-preview {
+  color: #6b5f82;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.penpal-inbox-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.penpal-inbox-time {
+  color: #4a4260;
+  font-size: 0.75rem;
+}
+
+.penpal-inbox-count {
+  color: #4a4260;
+  font-size: 0.7rem;
+}
+
+#penpal-thread-messages {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.penpal-message {
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.penpal-message-me {
+  background: #2a2250;
+  border-left: 3px solid #7c5cbf;
+  margin-left: auto;
+}
+
+.penpal-message-them {
+  background: #1e1a35;
+  border-left: 3px solid #4a3f6b;
+}
+
+.penpal-message p {
+  font-size: 0.9rem;
+  color: #c8c0d8;
+}
+
+#penpal-thread-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#penpal-thread-form textarea {
   margin-bottom: 0;
 }
 
-#send-message {
+.penpal-thread-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.penpal-thread-actions .primary-btn {
   width: auto;
-  padding: 0.7rem 1.2rem;
+  padding: 0.6rem 1.2rem;
+  margin: 0;
+}
+
+#penpal-thread-limit {
+  margin: 0;
+}
+
+#penpal-compose textarea {
+  min-height: 100px;
+}
+
+#penpal-compose .primary-btn {
+  width: auto;
+  padding: 0.7rem 1.5rem;
+}
+
+.error-text {
+  color: #fca5a5;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+#penpal-thread-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#penpal-thread-messages::-webkit-scrollbar-track {
+  background: #1e1a35;
+}
+
+#penpal-thread-messages::-webkit-scrollbar-thumb {
+  background: #3a3355;
+  border-radius: 3px;
 }
 
 /* Buddy Chat */
@@ -428,20 +593,6 @@ textarea::placeholder {
   padding: 1rem;
   color: #86efac;
   font-size: 0.95rem;
-}
-
-/* Scrollbar */
-#messages-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-#messages-container::-webkit-scrollbar-track {
-  background: #1e1a35;
-}
-
-#messages-container::-webkit-scrollbar-thumb {
-  background: #3a3355;
-  border-radius: 3px;
 }
 
 /* Floating Help Button */
@@ -601,11 +752,6 @@ textarea::placeholder {
   color: #a78bfa;
 }
 
-.message-user {
-  color: #6b5f82;
-  font-size: 0.8rem;
-}
-
 footer {
   text-align: center;
   padding: 2rem 1rem;
@@ -623,12 +769,10 @@ footer {
     max-width: 90%;
   }
 
-  #message-form,
   #buddy-chat-actions {
     flex-direction: column;
   }
 
-  #send-message,
   #buddy-send-btn,
   #leave-buddy-btn {
     width: 100%;
