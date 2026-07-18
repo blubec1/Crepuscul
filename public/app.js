@@ -12,8 +12,6 @@ function getSessionId() {
   return id;
 }
 
-let activeExercise = null;
-let timerInterval = null;
 let signalRConnection = null;
 let buddyConnection = null;
 let currentBuddyMatchId = null;
@@ -298,10 +296,15 @@ async function loadDashboard() {
   const dashboard = document.getElementById("dashboard");
 
   grid.innerHTML = `
-    <div class="feature-card" id="feature-exercises">
-      <h3>Breathing & Grounding</h3>
-      <p>Exercises to calm your mind right now</p>
-      <button class="feature-btn" onclick="showExercisesSection()">Open</button>
+    <div class="feature-card" id="feature-sounds">
+      <h3>Sounds</h3>
+      <p>Ambient noise to calm your mind</p>
+      <button class="feature-btn" onclick="showSoundsSection()">Open</button>
+    </div>
+    <div class="feature-card" id="feature-games">
+      <h3>Games</h3>
+      <p>Low-intensity activities to unwind</p>
+      <button class="feature-btn" onclick="showGamesSection()">Open</button>
     </div>
     <div class="feature-card" id="feature-buddy">
       <h3>Buddy Chat</h3>
@@ -324,11 +327,10 @@ async function loadRecommendations() {
     const data = await res.json();
 
     const featureMap = {
-      breathing: "feature-exercises",
-      grounding: "feature-exercises",
+      sounds: "feature-sounds",
+      games: "feature-games",
       journal: "feature-buddy",
       chat: "feature-support",
-      exercises: "feature-exercises",
     };
 
     data.features.forEach((f) => {
@@ -343,90 +345,890 @@ async function loadRecommendations() {
   }
 }
 
-function showExercisesSection() {
-  const section = document.getElementById("exercise-area");
-  section.classList.remove("hidden");
-  section.scrollIntoView({ behavior: "smooth" });
-  document.getElementById("exercise-title").textContent = "Pick an exercise";
-  document.getElementById("exercise-instructions").textContent = "We will suggest one based on how you feel. Or choose from the list below.";
-  loadExercisesList();
-}
-
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
-// --- Exercises ---
-async function loadExercisesList() {
-  try {
-    const res = await authFetch(`${API}/api/checkin/recommendations?sessionId=${getSessionId()}`);
-    const data = await res.json();
+// --- Sounds ---
+let audioCtx = null;
+let soundNodes = {};
 
-    const moodMap = {
-      breathing: "anxiety",
-      grounding: "anxiety",
-      exercises: "insomnia",
-    };
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
 
-    let moodType = "any";
-    for (const f of data.features) {
-      if (moodMap[f]) { moodType = moodMap[f]; break; }
-    }
+function getMasterGain() {
+  if (!soundNodes.masterGain) {
+    const ctx = getAudioCtx();
+    soundNodes.masterGain = ctx.createGain();
+    soundNodes.masterGain.connect(ctx.destination);
+    soundNodes.masterGain.gain.value = 0.5;
+  }
+  return soundNodes.masterGain;
+}
 
-    const moodId = { anxiety: 2, insomnia: 5, loneliness: 4, low: 3 }[moodType] || 3;
-    const exRes = await authFetch(`${API}/api/exercises/${moodId}`);
-    const exercises = await exRes.json();
+function createNoiseBuffer(ctx, duration) {
+  const len = duration * ctx.sampleRate;
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  return buf;
+}
 
-    if (exercises.length > 0) {
-      showExercise(exercises[0]);
-    }
-  } catch (err) {
-    console.error("Failed to load exercises:", err);
+const audioBufferCache = {};
+async function loadAudioBuffer(url) {
+  if (audioBufferCache[url]) return audioBufferCache[url];
+  const ctx = getAudioCtx();
+  const resp = await fetch(url);
+  const data = await resp.arrayBuffer();
+  const buf = await ctx.decodeAudioData(data);
+  audioBufferCache[url] = buf;
+  return buf;
+}
+
+function startRain() {
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = createNoiseBuffer(ctx, 4);
+  src.loop = true;
+
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 2500;
+  bp.Q.value = 0.5;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.4;
+
+  src.connect(bp);
+  bp.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.rain = { src, bp, gain };
+}
+
+function stopRain() {
+  if (soundNodes.rain) { soundNodes.rain.src.stop(); soundNodes.rain = null; }
+}
+
+function startWaves() {
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = createNoiseBuffer(ctx, 6);
+  src.loop = true;
+
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 600;
+
+  const lfo = ctx.createOscillator();
+  lfo.type = "sine";
+  lfo.frequency.value = 0.08;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.3;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.5;
+
+  lfo.connect(lfoGain);
+  lfoGain.connect(gain.gain);
+  src.connect(lp);
+  lp.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  lfo.start();
+  soundNodes.waves = { src, lp, lfo, lfoGain, gain };
+}
+
+function stopWaves() {
+  if (soundNodes.waves) { soundNodes.waves.src.stop(); soundNodes.waves.lfo.stop(); soundNodes.waves = null; }
+}
+
+function startWind() {
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = createNoiseBuffer(ctx, 5);
+  src.loop = true;
+
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 800;
+  bp.Q.value = 0.3;
+
+  const lfo = ctx.createOscillator();
+  lfo.type = "sine";
+  lfo.frequency.value = 0.15;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 400;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.35;
+
+  lfo.connect(lfoGain);
+  lfoGain.connect(bp.frequency);
+  src.connect(bp);
+  bp.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  lfo.start();
+  soundNodes.wind = { src, bp, lfo, lfoGain, gain };
+}
+
+function stopWind() {
+  if (soundNodes.wind) { soundNodes.wind.src.stop(); soundNodes.wind.lfo.stop(); soundNodes.wind = null; }
+}
+
+function startWhiteNoise() {
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = createNoiseBuffer(ctx, 4);
+  src.loop = true;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.3;
+
+  src.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.whitenoise = { src, gain };
+}
+
+function stopWhiteNoise() {
+  if (soundNodes.whitenoise) {
+    soundNodes.whitenoise.src.stop();
+    soundNodes.whitenoise = null;
   }
 }
 
-function showExercise(exercise) {
-  activeExercise = exercise;
-  document.getElementById("exercise-title").textContent = exercise.title;
-  document.getElementById("exercise-instructions").textContent = exercise.instructions;
-  document.getElementById("exercise-timer").classList.add("hidden");
-  document.getElementById("start-exercise").textContent = "Start Exercise";
-  document.getElementById("start-exercise").classList.remove("hidden");
-  document.getElementById("exercise-area").classList.remove("hidden");
-  document.getElementById("exercise-area").scrollIntoView({ behavior: "smooth" });
+async function startCampfire() {
+  const ctx = getAudioCtx();
+  const buf = await loadAudioBuffer("sounds/campfire.mp3");
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.35;
+
+  src.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.campfire = { src, gain };
 }
 
-document.getElementById("start-exercise").addEventListener("click", () => {
-  if (!activeExercise) return;
+function stopCampfire() {
+  if (soundNodes.campfire) {
+    soundNodes.campfire.src.stop();
+    soundNodes.campfire = null;
+  }
+}
 
-  let remaining = activeExercise.durationSeconds;
-  document.getElementById("exercise-timer").classList.remove("hidden");
-  document.getElementById("start-exercise").classList.add("hidden");
-  updateTimerDisplay(remaining);
+async function startCrickets() {
+  const ctx = getAudioCtx();
+  if (localStorage.getItem("easter_egg_cricket") === "1") {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = 7000;
 
-  timerInterval = setInterval(() => {
+    const lfo = ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 15;
+
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 2;
+
+    const mainGain = ctx.createGain();
+    mainGain.gain.value = 0.15;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(mainGain.gain);
+
+    osc.connect(mainGain);
+    mainGain.connect(getMasterGain());
+
+    osc.start();
+    lfo.start();
+    soundNodes.crickets = { src: osc, lfo, gain: mainGain, lfoGain };
+    return;
+  }
+  const buf = await loadAudioBuffer("sounds/crickets.mp3");
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.3;
+
+  src.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.crickets = { src, gain };
+}
+
+function stopCrickets() {
+  if (soundNodes.crickets) {
+    soundNodes.crickets.src.stop();
+    if (soundNodes.crickets.lfo) soundNodes.crickets.lfo.stop();
+    soundNodes.crickets = null;
+  }
+}
+
+function startBinaural() {
+  const ctx = getAudioCtx();
+  const oscL = ctx.createOscillator();
+  const oscR = ctx.createOscillator();
+  oscL.frequency.value = 200;
+  oscR.frequency.value = 210;
+
+  const merger = ctx.createChannelMerger(2);
+  const gainL = ctx.createGain();
+  const gainR = ctx.createGain();
+  gainL.gain.value = 0.3;
+  gainR.gain.value = 0.3;
+
+  oscL.connect(gainL);
+  oscR.connect(gainR);
+  gainL.connect(merger, 0, 0);
+  gainR.connect(merger, 0, 1);
+  merger.connect(getMasterGain());
+  oscL.start();
+  oscR.start();
+  soundNodes.binaural = { oscL, oscR, gainL, gainR, merger };
+}
+
+function stopBinaural() {
+  if (soundNodes.binaural) {
+    soundNodes.binaural.oscL.stop();
+    soundNodes.binaural.oscR.stop();
+    soundNodes.binaural = null;
+  }
+}
+
+const LOFI_TRACKS = [
+  "sounds/lofi-01.mp3", "sounds/lofi-02.mp3", "sounds/lofi-03.mp3",
+  "sounds/lofi-04.mp3", "sounds/lofi-05.mp3", "sounds/lofi-06.mp3",
+  "sounds/lofi-07.mp3", "sounds/lofi-08.mp3", "sounds/lofi-09.mp3",
+  "sounds/lofi-10.mp3"
+];
+
+async function startLofi() {
+  const ctx = getAudioCtx();
+  const url = LOFI_TRACKS[Math.floor(Math.random() * LOFI_TRACKS.length)];
+  const buf = await loadAudioBuffer(url);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.4;
+
+  src.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.lofi = { src, gain };
+}
+
+function stopLofi() {
+  if (soundNodes.lofi) {
+    soundNodes.lofi.src.stop();
+    soundNodes.lofi = null;
+  }
+}
+
+const CHOPIN_TRACKS = [
+  "sounds/chopin-01.mp3", "sounds/chopin-02.mp3", "sounds/chopin-03.mp3",
+  "sounds/chopin-04.mp3", "sounds/chopin-05.mp3"
+];
+
+async function startClassical() {
+  const ctx = getAudioCtx();
+  const url = CHOPIN_TRACKS[Math.floor(Math.random() * CHOPIN_TRACKS.length)];
+  const buf = await loadAudioBuffer(url);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.4;
+
+  src.connect(gain);
+  gain.connect(getMasterGain());
+  src.start();
+  soundNodes.classical = { src, gain };
+}
+
+function stopClassical() {
+  if (soundNodes.classical) {
+    soundNodes.classical.src.stop();
+    soundNodes.classical = null;
+  }
+}
+
+const soundStarters = {
+  rain: startRain, waves: startWaves, wind: startWind,
+  whitenoise: startWhiteNoise, campfire: startCampfire, crickets: startCrickets,
+  binaural: startBinaural, lofi: startLofi, classical: startClassical
+};
+const soundStoppers = {
+  rain: stopRain, waves: stopWaves, wind: stopWind,
+  whitenoise: stopWhiteNoise, campfire: stopCampfire, crickets: stopCrickets,
+  binaural: stopBinaural, lofi: stopLofi, classical: stopClassical
+};
+
+document.querySelectorAll(".sound-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const sound = btn.dataset.sound;
+    if (btn.classList.contains("active")) {
+      soundStoppers[sound]();
+      btn.classList.remove("active");
+      btn.dataset.loading = "";
+    } else if (!btn.dataset.loading) {
+      btn.dataset.loading = "1";
+      btn.disabled = true;
+      await soundStarters[sound]();
+      btn.disabled = false;
+      if (btn.dataset.loading) {
+        btn.classList.add("active");
+      }
+      btn.dataset.loading = "";
+    }
+  });
+});
+
+document.getElementById("master-volume").addEventListener("input", (e) => {
+  const gain = getMasterGain();
+  gain.gain.setTargetAtTime(e.target.value / 100, audioCtx.currentTime, 0.02);
+});
+
+function showSoundsSection() {
+  const section = document.getElementById("sounds-area");
+  section.classList.remove("hidden");
+  section.scrollIntoView({ behavior: "smooth" });
+}
+
+document.getElementById("close-sounds").addEventListener("click", () => {
+  document.querySelectorAll(".sound-btn.active").forEach((btn) => {
+    const sound = btn.dataset.sound;
+    soundStoppers[sound]();
+    btn.classList.remove("active");
+  });
+  document.getElementById("sounds-area").classList.add("hidden");
+});
+
+// --- Games ---
+function showGamesSection() {
+  const section = document.getElementById("games-area");
+  section.classList.remove("hidden");
+  section.scrollIntoView({ behavior: "smooth" });
+}
+
+function showGamePicker() {
+  document.getElementById("free-draw-area").classList.add("hidden");
+  document.getElementById("aim-trainer-area").classList.add("hidden");
+  document.getElementById("firefly-area").classList.add("hidden");
+  document.getElementById("game-picker").classList.remove("hidden");
+  stopFireflyGame();
+}
+
+document.getElementById("close-games").addEventListener("click", () => {
+  document.getElementById("games-area").classList.add("hidden");
+  if (aimAnimFrame) cancelAnimationFrame(aimAnimFrame);
+  if (aimGameInterval) clearInterval(aimGameInterval);
+  if (aimCountdown) clearInterval(aimCountdown);
+  stopFireflyGame();
+  showGamePicker();
+});
+
+// --- Free Draw ---
+const DRAW_COLORS = ["#a78bfa", "#7c5cbf", "#93c5fd", "#60a5fa", "#6ee7b7", "#34d399", "#c4b5fd", "#e2e8f0"];
+let drawColor = DRAW_COLORS[0];
+let erasing = false;
+
+function initFreeDraw() {
+  const palette = document.getElementById("color-palette");
+  palette.innerHTML = "";
+  DRAW_COLORS.forEach((c) => {
+    const swatch = document.createElement("div");
+    swatch.className = "color-swatch" + (c === drawColor ? " selected" : "");
+    swatch.style.background = c;
+    swatch.addEventListener("click", () => {
+      palette.querySelectorAll(".color-swatch").forEach((s) => s.classList.remove("selected"));
+      swatch.classList.add("selected");
+      drawColor = c;
+      erasing = false;
+      document.getElementById("eraser-btn").classList.remove("active");
+      ctx.globalCompositeOperation = "source-over";
+    });
+    palette.appendChild(swatch);
+  });
+
+  const canvas = document.getElementById("draw-canvas");
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = drawColor;
+
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    ctx.lineWidth = Math.max(1, Math.min(30, ctx.lineWidth + (e.deltaY > 0 ? -1 : 1)));
+    updateBrushCursor();
+  }, { passive: false });
+
+  const brushCursor = document.getElementById("brush-cursor");
+  const wrapper = canvas.closest(".canvas-wrapper");
+
+  function updateBrushCursor() {
+    const size = ctx.lineWidth;
+    brushCursor.style.width = size + "px";
+    brushCursor.style.height = size + "px";
+  }
+  updateBrushCursor();
+
+  wrapper.addEventListener("mousemove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    brushCursor.style.left = x + "px";
+    brushCursor.style.top = y + "px";
+    brushCursor.style.display = "block";
+  });
+
+  wrapper.addEventListener("mouseleave", () => {
+    brushCursor.style.display = "none";
+  });
+
+  let drawing = false;
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: touch.clientX - r.left, y: touch.clientY - r.top };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    ctx.strokeStyle = drawColor;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  }
+
+  function endDraw() { drawing = false; }
+
+  canvas.removeEventListener("mousedown", canvas._mouseDown);
+  canvas.removeEventListener("mousemove", canvas._mouseMove);
+  canvas.removeEventListener("mouseup", canvas._mouseUp);
+  canvas.removeEventListener("touchstart", canvas._touchStart);
+  canvas.removeEventListener("touchmove", canvas._touchMove);
+  canvas.removeEventListener("touchend", canvas._touchEnd);
+
+  canvas._mouseDown = startDraw;
+  canvas._mouseMove = draw;
+  canvas._mouseUp = endDraw;
+  canvas._touchStart = startDraw;
+  canvas._touchMove = draw;
+  canvas._touchEnd = endDraw;
+
+  canvas.addEventListener("mousedown", startDraw);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", endDraw);
+  canvas.addEventListener("mouseleave", endDraw);
+  canvas.addEventListener("touchstart", startDraw, { passive: false });
+  canvas.addEventListener("touchmove", draw, { passive: false });
+  canvas.addEventListener("touchend", endDraw);
+}
+
+  document.getElementById("clear-canvas").addEventListener("click", () => {
+  const canvas = document.getElementById("draw-canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+document.getElementById("eraser-btn").addEventListener("click", () => {
+  const btn = document.getElementById("eraser-btn");
+  erasing = !erasing;
+  btn.classList.toggle("active", erasing);
+  const ctx = document.getElementById("draw-canvas").getContext("2d");
+  ctx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
+});
+
+function startFreeDraw() {
+  document.getElementById("game-picker").classList.add("hidden");
+  document.getElementById("free-draw-area").classList.remove("hidden");
+  initFreeDraw();
+}
+
+// --- Aim Trainer ---
+let aimAnimFrame = null;
+let aimGameInterval = null;
+let aimCountdown = null;
+let aimScore = 0;
+let aimTargets = [];
+let aimRunning = false;
+
+function initAimTrainer() {
+  const canvas = document.getElementById("aim-canvas");
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  return { canvas, ctx, w: rect.width, h: rect.height };
+}
+
+function startAimTrainer() {
+  document.getElementById("game-picker").classList.add("hidden");
+  document.getElementById("aim-trainer-area").classList.remove("hidden");
+  document.getElementById("aim-score").textContent = "0";
+  document.getElementById("aim-timer").textContent = "0:30";
+  document.getElementById("aim-start-btn").classList.remove("hidden");
+  aimScore = 0;
+  aimTargets = [];
+  aimRunning = false;
+  if (aimAnimFrame) cancelAnimationFrame(aimAnimFrame);
+  if (aimGameInterval) clearInterval(aimGameInterval);
+  if (aimCountdown) clearInterval(aimCountdown);
+}
+
+document.getElementById("aim-start-btn").addEventListener("click", () => {
+  document.getElementById("aim-start-btn").classList.add("hidden");
+  const { canvas, ctx, w, h } = initAimTrainer();
+  aimScore = 0;
+  aimTargets = [];
+  aimRunning = true;
+  document.getElementById("aim-score").textContent = "0";
+
+  let remaining = 30;
+  document.getElementById("aim-timer").textContent = "0:30";
+
+  aimCountdown = setInterval(() => {
     remaining--;
-    updateTimerDisplay(remaining);
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    document.getElementById("aim-timer").textContent = `${m}:${s.toString().padStart(2, "0")}`;
     if (remaining <= 0) {
-      clearInterval(timerInterval);
-      document.getElementById("timer-text").textContent = "Done";
-      document.getElementById("start-exercise").textContent = "Try Again";
-      document.getElementById("start-exercise").classList.remove("hidden");
+      aimRunning = false;
+      clearInterval(aimCountdown);
+      clearInterval(aimGameInterval);
     }
   }, 1000);
+
+  aimGameInterval = setInterval(() => {
+    if (!aimRunning) return;
+    const radius = 20 + Math.random() * 15;
+    aimTargets.push({
+      x: radius + Math.random() * (w - radius * 2),
+      y: radius + Math.random() * (h - radius * 2),
+      radius,
+      opacity: 1,
+      born: Date.now(),
+    });
+  }, 2500);
+
+  canvas.onclick = (e) => {
+    if (!aimRunning) return;
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left;
+    const my = e.clientY - r.top;
+    for (let i = aimTargets.length - 1; i >= 0; i--) {
+      const t = aimTargets[i];
+      const dist = Math.sqrt((mx - t.x) ** 2 + (my - t.y) ** 2);
+      if (dist <= t.radius) {
+        aimTargets.splice(i, 1);
+        aimScore++;
+        document.getElementById("aim-score").textContent = aimScore;
+        break;
+      }
+    }
+  };
+
+  function renderAim() {
+    ctx.clearRect(0, 0, w, h);
+    const now = Date.now();
+    aimTargets = aimTargets.filter((t) => now - t.born < 3000);
+    aimTargets.forEach((t) => {
+      const age = (now - t.born) / 3000;
+      const alpha = 1 - age * 0.5;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(124, 92, 191, ${alpha})`;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(167, 139, 250, ${alpha})`;
+      ctx.fill();
+    });
+    aimAnimFrame = requestAnimationFrame(renderAim);
+  }
+  renderAim();
 });
 
-function updateTimerDisplay(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  document.getElementById("timer-text").textContent = `${m}:${s.toString().padStart(2, "0")}`;
+// --- Fireflies ---
+let fireflyAnimFrame = null;
+let fireflySpawnTimer = null;
+let fireflies = [];
+let fireflyQuotes = [];
+let fireflyCaught = 0;
+let fireflyDrag = null;
+
+const FIREFLY_QUOTES = [
+  "You are enough",
+  "This too shall pass",
+  "Be gentle with yourself",
+  "You are not alone",
+  "Rest is productive",
+  "You deserve peace",
+  "Breathe. You're okay.",
+  "Small steps count",
+  "You are worthy of love",
+  "It's okay to not be okay",
+  "You're doing your best",
+  "Tomorrow is a new day",
+  "You matter",
+  "Let go and breathe",
+  "You are stronger than you think",
+  "This moment will pass",
+  "You are loved",
+  "Be kind to your mind",
+  "You're exactly where you need to be",
+  "Healing takes time"
+];
+
+function startFireflyGame() {
+  document.getElementById("game-picker").classList.add("hidden");
+  document.getElementById("firefly-area").classList.remove("hidden");
+
+  const canvas = document.getElementById("firefly-canvas");
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const h = rect.height;
+
+  const POT_W = 60;
+  const POT_H = 45;
+  const POT_X = w / 2;
+  const POT_Y = h - 15;
+
+  fireflies = [];
+  fireflyQuotes = [];
+  fireflyCaught = 0;
+  fireflyDrag = null;
+  document.getElementById("firefly-count").textContent = "0 gathered";
+
+  function spawnFirefly() {
+    const side = Math.floor(Math.random() * 4);
+    let x, y, vx, vy;
+    const speed = 0.15 + Math.random() * 0.25;
+    switch (side) {
+      case 0: x = -10; y = Math.random() * (h - 80); vx = speed; vy = (Math.random() - 0.5) * speed * 0.6; break;
+      case 1: x = w + 10; y = Math.random() * (h - 80); vx = -speed; vy = (Math.random() - 0.5) * speed * 0.6; break;
+      case 2: x = Math.random() * w; y = -10; vx = (Math.random() - 0.5) * speed * 0.6; vy = speed; break;
+      case 3: x = Math.random() * w; y = h + 10; vx = (Math.random() - 0.5) * speed * 0.6; vy = -speed; break;
+    }
+    fireflies.push({
+      x, y, vx, vy,
+      baseAlpha: 0.3 + Math.random() * 0.5,
+      alpha: 0,
+      alphaDir: 0.005 + Math.random() * 0.01,
+      radius: 2 + Math.random() * 2,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.01 + Math.random() * 0.02,
+      wobbleAmp: 0.2 + Math.random() * 0.4,
+      hue: 50 + Math.random() * 30,
+      dragging: false
+    });
+  }
+
+  for (let i = 0; i < 8; i++) spawnFirefly();
+  fireflySpawnTimer = setInterval(() => {
+    if (fireflies.length < 25) spawnFirefly();
+  }, 900);
+
+  function drawPot() {
+    const px = POT_X, py = POT_Y;
+    ctx.save();
+    ctx.fillStyle = "#5c4a3a";
+    ctx.beginPath();
+    ctx.moveTo(px - POT_W / 2, py - POT_H);
+    ctx.quadraticCurveTo(px - POT_W / 2 - 6, py, px - POT_W / 2 + 5, py);
+    ctx.lineTo(px + POT_W / 2 - 5, py);
+    ctx.quadraticCurveTo(px + POT_W / 2 + 6, py, px + POT_W / 2, py - POT_H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#7a6652";
+    ctx.beginPath();
+    ctx.ellipse(px, py - POT_H, POT_W / 2 + 4, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#4a3c2e";
+    ctx.beginPath();
+    ctx.ellipse(px, py - POT_H, POT_W / 2 - 2, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function renderFireflies() {
+    ctx.clearRect(0, 0, w, h);
+    drawPot();
+
+    for (let i = fireflies.length - 1; i >= 0; i--) {
+      const f = fireflies[i];
+
+      if (!f.dragging) {
+        f.wobblePhase += f.wobbleSpeed;
+        f.x += f.vx + Math.sin(f.wobblePhase) * f.wobbleAmp;
+        f.y += f.vy + Math.cos(f.wobblePhase * 0.7) * f.wobbleAmp * 0.5;
+      }
+
+      f.alpha += f.alphaDir;
+      if (f.alpha > f.baseAlpha || f.alpha < 0.05) f.alphaDir *= -1;
+      f.alpha = Math.max(0.05, Math.min(f.alpha, f.baseAlpha));
+
+      if (!f.dragging && (f.x < -30 || f.x > w + 30 || f.y < -30 || f.y > h + 30)) {
+        fireflies.splice(i, 1);
+        continue;
+      }
+
+      const glow = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius * 6);
+      glow.addColorStop(0, `hsla(${f.hue}, 100%, 85%, ${f.alpha})`);
+      glow.addColorStop(0.4, `hsla(${f.hue}, 90%, 70%, ${f.alpha * 0.3})`);
+      glow.addColorStop(1, `hsla(${f.hue}, 80%, 60%, 0)`);
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.radius * 6, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${f.hue}, 100%, 90%, ${f.alpha + 0.2})`;
+      ctx.fill();
+    }
+
+    for (let i = fireflyQuotes.length - 1; i >= 0; i--) {
+      const q = fireflyQuotes[i];
+      q.y -= 0.3;
+      q.alpha -= 0.003;
+      if (q.alpha <= 0) { fireflyQuotes.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = q.alpha;
+      ctx.fillStyle = "#e8dff5";
+      ctx.font = "italic 14px 'Georgia', serif";
+      ctx.textAlign = "center";
+      ctx.fillText(q.text, q.x, q.y);
+      ctx.restore();
+    }
+
+    fireflyAnimFrame = requestAnimationFrame(renderFireflies);
+  }
+  renderFireflies();
+
+  function getCanvasPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+
+  function findFireflyAt(mx, my) {
+    for (let i = fireflies.length - 1; i >= 0; i--) {
+      const f = fireflies[i];
+      const dx = f.x - mx, dy = f.y - my;
+      if (dx * dx + dy * dy < (f.radius * 10) * (f.radius * 10)) return f;
+    }
+    return null;
+  }
+
+  function isInPot(f) {
+    const dx = f.x - POT_X;
+    const dy = f.y - (POT_Y - POT_H / 2);
+    return Math.abs(dx) < POT_W / 2 + 10 && dy > -POT_H / 2 && dy < POT_H / 2 + 10;
+  }
+
+  function catchFirefly(f) {
+    fireflyCaught++;
+    document.getElementById("firefly-count").textContent = fireflyCaught + " gathered";
+    const idx = fireflies.indexOf(f);
+    if (idx !== -1) fireflies.splice(idx, 1);
+    fireflyQuotes.push({
+      text: FIREFLY_QUOTES[Math.floor(Math.random() * FIREFLY_QUOTES.length)],
+      x: POT_X + (Math.random() - 0.5) * 30,
+      y: POT_Y - POT_H - 10,
+      alpha: 1
+    });
+  }
+
+  canvas.addEventListener("mousedown", (e) => {
+    const p = getCanvasPos(e);
+    const f = findFireflyAt(p.x, p.y);
+    if (f) { f.dragging = true; fireflyDrag = f; }
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!fireflyDrag) return;
+    const p = getCanvasPos(e);
+    fireflyDrag.x = p.x;
+    fireflyDrag.y = p.y;
+  });
+
+  canvas.addEventListener("mouseup", () => {
+    if (!fireflyDrag) return;
+    if (isInPot(fireflyDrag)) catchFirefly(fireflyDrag);
+    fireflyDrag.dragging = false;
+    fireflyDrag = null;
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    if (fireflyDrag) { fireflyDrag.dragging = false; fireflyDrag = null; }
+  });
+
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const p = getCanvasPos(e);
+    const f = findFireflyAt(p.x, p.y);
+    if (f) { f.dragging = true; fireflyDrag = f; }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (!fireflyDrag) return;
+    const p = getCanvasPos(e);
+    fireflyDrag.x = p.x;
+    fireflyDrag.y = p.y;
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    if (!fireflyDrag) return;
+    if (isInPot(fireflyDrag)) catchFirefly(fireflyDrag);
+    fireflyDrag.dragging = false;
+    fireflyDrag = null;
+  }, { passive: false });
 }
 
-document.getElementById("close-exercise").addEventListener("click", () => {
-  if (timerInterval) clearInterval(timerInterval);
-  document.getElementById("exercise-area").classList.add("hidden");
-  activeExercise = null;
-});
+function stopFireflyGame() {
+  if (fireflyAnimFrame) { cancelAnimationFrame(fireflyAnimFrame); fireflyAnimFrame = null; }
+  if (fireflySpawnTimer) { clearInterval(fireflySpawnTimer); fireflySpawnTimer = null; }
+  fireflies = [];
+  fireflyQuotes = [];
+  fireflyDrag = null;
+}
 
 // --- Buddy System ---
 async function showBuddySection() {
@@ -474,6 +1276,17 @@ document.getElementById("find-buddy-btn").addEventListener("click", async () => 
       status.textContent = data.error || "Could not join the queue.";
       btn.disabled = false;
       btn.textContent = "Find a Buddy";
+      return;
+    }
+
+    if (data.matched) {
+      currentBuddyMatchId = data.matchId;
+      btn.classList.add("hidden");
+      cancelBtn.classList.add("hidden");
+      status.textContent = "You've been matched! Say hello below.";
+      document.getElementById("buddy-chat").classList.remove("hidden");
+      loadBuddyMessages(data.matchId);
+      connectBuddyChat(data.matchId);
       return;
     }
 
@@ -628,7 +1441,7 @@ function initPenPal() {
     `;
     return;
   }
-  checkPenPalAlias();
+  showPenPalInbox();
 }
 
 async function checkPenPalAlias() {

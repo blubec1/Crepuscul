@@ -149,8 +149,8 @@ public class CheckinController : ControllerBase
 
             if (answer.Value <= 2)
             {
-                if (!features.Contains("breathing")) features.Add("breathing");
-                if (!features.Contains("grounding")) features.Add("grounding");
+                if (!features.Contains("sounds")) features.Add("sounds");
+                if (!features.Contains("games")) features.Add("games");
             }
             if (answer.Value >= 4)
             {

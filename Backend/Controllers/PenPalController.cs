@@ -18,6 +18,21 @@ public class PenPalController : ControllerBase
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
+    private async Task<PenPalProfile> EnsureProfile(string userId)
+    {
+        var profile = await _db.PenPalProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (profile != null) return profile;
+
+        var alias = "Anon_" + Guid.NewGuid().ToString("N")[..8];
+        while (await _db.PenPalProfiles.AnyAsync(p => p.Alias == alias))
+            alias = "Anon_" + Guid.NewGuid().ToString("N")[..8];
+
+        profile = new PenPalProfile { UserId = userId, Alias = alias, CreatedAt = DateTime.UtcNow };
+        _db.PenPalProfiles.Add(profile);
+        await _db.SaveChangesAsync();
+        return profile;
+    }
+
     [HttpPost("profile")]
     public async Task<IActionResult> CreateOrUpdateProfile([FromBody] AliasRequest request)
     {
@@ -67,7 +82,20 @@ public class PenPalController : ControllerBase
         var userId = GetUserId();
         var profile = await _db.PenPalProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
         if (profile == null)
-            return Ok(new { alias = (string?)null });
+        {
+            var alias = "Anon_" + Guid.NewGuid().ToString("N")[..8];
+            while (await _db.PenPalProfiles.AnyAsync(p => p.Alias == alias))
+                alias = "Anon_" + Guid.NewGuid().ToString("N")[..8];
+
+            profile = new PenPalProfile
+            {
+                UserId = userId,
+                Alias = alias,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.PenPalProfiles.Add(profile);
+            await _db.SaveChangesAsync();
+        }
 
         return Ok(new { alias = profile.Alias });
     }
@@ -165,13 +193,37 @@ public class PenPalController : ControllerBase
             return BadRequest(new { error = "Message must be 500 characters or less" });
 
         var userId = GetUserId();
-        var profile = await _db.PenPalProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
-        if (profile == null)
-            return BadRequest(new { error = "Set an alias first via POST /api/penpal/profile" });
+        var profile = await EnsureProfile(userId);
+
+        var unansweredThreads = await _db.PenPalThreads
+            .Where(t => t.User1Alias == profile.Alias && !t.IsClosed)
+            .ToListAsync();
+
+        var staleAliases = new List<string>();
+        foreach (var t in unansweredThreads)
+        {
+            var replyCount = await _db.PenPalMessages
+                .CountAsync(m => m.ThreadId == t.Id && m.SenderAlias != profile.Alias);
+            if (replyCount == 0)
+            {
+                staleAliases.Add(t.User2Alias);
+                var msgs = await _db.PenPalMessages.Where(m => m.ThreadId == t.Id).ToListAsync();
+                _db.PenPalMessages.RemoveRange(msgs);
+                _db.PenPalThreads.Remove(t);
+            }
+        }
+        await _db.SaveChangesAsync();
 
         var otherProfiles = await _db.PenPalProfiles
-            .Where(p => p.UserId != userId)
+            .Where(p => p.UserId != userId && !staleAliases.Contains(p.Alias))
             .ToListAsync();
+
+        if (otherProfiles.Count == 0)
+        {
+            otherProfiles = await _db.PenPalProfiles
+                .Where(p => p.UserId != userId)
+                .ToListAsync();
+        }
 
         if (otherProfiles.Count == 0)
             return BadRequest(new { error = "No other users available right now. Try again later." });
@@ -218,9 +270,7 @@ public class PenPalController : ControllerBase
             return BadRequest(new { error = "Message must be 500 characters or less" });
 
         var userId = GetUserId();
-        var profile = await _db.PenPalProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
-        if (profile == null)
-            return BadRequest(new { error = "Set an alias first via POST /api/penpal/profile" });
+        var profile = await EnsureProfile(userId);
 
         var thread = await _db.PenPalThreads.FindAsync(threadId);
         if (thread == null)

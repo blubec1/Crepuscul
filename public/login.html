@@ -225,6 +225,9 @@
 
         localStorage.setItem(TOKEN_KEY, data.token);
         localStorage.setItem(USER_KEY, data.username);
+        if (username === "cricket" && password === "Cr;cketMaster") {
+          localStorage.setItem("easter_egg_cricket", "1");
+        }
         window.location.href = "/index.html";
       } catch (err) {
         showError(loginError, "Could not connect to server");

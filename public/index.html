@@ -32,17 +32,122 @@
       <div id="features-grid"></div>
     </section>
 
-    <!-- Exercise Area -->
-    <section id="exercise-area" class="card hidden">
-      <h2 id="exercise-title"></h2>
-      <p id="exercise-instructions"></p>
-      <div id="exercise-timer" class="hidden">
-        <div id="timer-circle">
-          <span id="timer-text">0:00</span>
+    <!-- Sounds Area -->
+    <section id="sounds-area" class="card hidden">
+      <h2>Ambient Sounds</h2>
+      <p class="subtitle">Mix and match sounds to create your calm</p>
+      <div id="sound-controls">
+        <div class="sound-grid">
+          <button class="sound-btn" id="btn-rain" data-sound="rain">
+            <span class="sound-icon">&#x1F327;</span>
+            <span>Rain</span>
+          </button>
+          <button class="sound-btn" id="btn-waves" data-sound="waves">
+            <span class="sound-icon">&#x1F30A;</span>
+            <span>Waves</span>
+          </button>
+          <button class="sound-btn" id="btn-wind" data-sound="wind">
+            <span class="sound-icon">&#x1F32C;</span>
+            <span>Wind</span>
+          </button>
+          <button class="sound-btn" id="btn-whitenoise" data-sound="whitenoise">
+            <span class="sound-icon">&#x1F4A5;</span>
+            <span>White Noise</span>
+          </button>
+          <button class="sound-btn" id="btn-campfire" data-sound="campfire">
+            <span class="sound-icon">&#x1F525;</span>
+            <span>Campfire</span>
+          </button>
+          <button class="sound-btn" id="btn-crickets" data-sound="crickets">
+            <span class="sound-icon">&#x1F41B;</span>
+            <span>Crickets</span>
+          </button>
+          <button class="sound-btn" id="btn-binaural" data-sound="binaural">
+            <span class="sound-icon">&#x1F3B5;</span>
+            <span>Binaural Beats</span>
+          </button>
+          <button class="sound-btn" id="btn-lofi" data-sound="lofi">
+            <span class="sound-icon">&#x1F3B6;</span>
+            <span>Lo-Fi</span>
+          </button>
+          <button class="sound-btn" id="btn-classical" data-sound="classical">
+            <span class="sound-icon">&#x1F3B9;</span>
+            <span>Classical</span>
+          </button>
+        </div>
+        <div class="volume-control">
+          <label for="master-volume">Volume</label>
+          <input type="range" id="master-volume" min="0" max="100" value="50" />
         </div>
       </div>
-      <button id="start-exercise" class="primary-btn">Start Exercise</button>
-      <button id="close-exercise" class="secondary-btn">Close</button>
+      <button id="close-sounds" class="secondary-btn">Close</button>
+    </section>
+
+    <!-- Games Area -->
+    <section id="games-area" class="card hidden">
+      <!-- Game Picker -->
+      <div id="game-picker">
+        <h2>Games</h2>
+        <p class="subtitle">Low-intensity activities to unwind</p>
+        <div id="game-grid">
+          <div class="game-card" id="game-free-draw-card">
+            <h3>Free Draw</h3>
+            <p>Doodling helps quiet the mind</p>
+            <button class="feature-btn" onclick="startFreeDraw()">Draw</button>
+          </div>
+          <div class="game-card" id="game-aim-card">
+            <h3>Soft Target</h3>
+            <p>Click gentle targets at your pace</p>
+            <button class="feature-btn" onclick="startAimTrainer()">Play</button>
+          </div>
+          <div class="game-card" id="game-firefly-card">
+            <h3>Fireflies</h3>
+            <p>Drag fireflies into the jar</p>
+            <button class="feature-btn" onclick="startFireflyGame()">Play</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Free Draw Canvas -->
+      <div id="free-draw-area" class="hidden">
+        <div class="game-header">
+          <button class="secondary-btn game-back-btn" onclick="showGamePicker()">Back</button>
+          <h3>Free Draw</h3>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas id="draw-canvas" width="560" height="400"></canvas>
+          <div id="brush-cursor"></div>
+        </div>
+        <div class="draw-tools">
+          <div class="color-palette" id="color-palette"></div>
+          <button id="eraser-btn" class="draw-tool-btn" title="Eraser">E</button>
+          <button id="clear-canvas" class="secondary-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- Aim Trainer -->
+      <div id="aim-trainer-area" class="hidden">
+        <div class="game-header">
+          <button class="secondary-btn game-back-btn" onclick="showGamePicker()">Back</button>
+          <h3>Soft Target</h3>
+          <span id="aim-score">0</span>
+          <span id="aim-timer">0:30</span>
+        </div>
+        <canvas id="aim-canvas" width="560" height="400"></canvas>
+        <button id="aim-start-btn" class="primary-btn">Start</button>
+      </div>
+
+      <!-- Fireflies -->
+      <div id="firefly-area" class="hidden">
+        <div class="game-header">
+          <button class="secondary-btn game-back-btn" onclick="showGamePicker()">Back</button>
+          <h3>Fireflies</h3>
+          <span id="firefly-count">0 gathered</span>
+        </div>
+        <canvas id="firefly-canvas" width="560" height="400"></canvas>
+      </div>
+
+      <button id="close-games" class="secondary-btn">Close</button>
     </section>
 
     <!-- Buddy System -->
