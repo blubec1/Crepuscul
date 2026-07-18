@@ -4,9 +4,97 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Afterglow - You Are Not Alone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: #1E2655; }
+
+    /* Background art: nested organic twilight blobs */
+    .bg-art {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      opacity: 0.95;
+      will-change: transform, border-radius;
+    }
+
+    .blob-1 {
+      width: 140vmax;
+      height: 140vmax;
+      background: radial-gradient(circle at 35% 30%, #7A3A6E 0%, #50295B 45%, #1E2655 100%);
+      border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+      filter: blur(28px);
+      animation: drift-1 26s ease-in-out infinite;
+    }
+
+    .blob-2 {
+      width: 92vmax;
+      height: 92vmax;
+      background: radial-gradient(circle at 65% 40%, #FF6F91 0%, #F63851 40%, #7A2F55 100%);
+      border-radius: 48% 52% 40% 60% / 55% 45% 55% 45%;
+      filter: blur(24px);
+      animation: drift-2 22s ease-in-out infinite;
+    }
+
+    .blob-3 {
+      width: 56vmax;
+      height: 56vmax;
+      background: radial-gradient(circle at 40% 55%, #FF9A3D 0%, #FE581D 45%, #F63851 100%);
+      border-radius: 55% 45% 58% 42% / 45% 58% 42% 55%;
+      filter: blur(20px);
+      animation: drift-3 18s ease-in-out infinite;
+    }
+
+    .blob-4 {
+      width: 32vmax;
+      height: 32vmax;
+      background: radial-gradient(circle at 50% 45%, #FFE28A 0%, #FCAE01 45%, #FE7A1D 100%);
+      border-radius: 50% 50% 46% 54% / 52% 48% 52% 48%;
+      filter: blur(18px);
+      animation: drift-4 20s ease-in-out infinite;
+    }
+
+    @keyframes drift-1 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; }
+      50% { transform: translate(-2%, 3%) rotate(8deg); border-radius: 55% 45% 40% 60% / 55% 48% 52% 45%; }
+    }
+    @keyframes drift-2 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 48% 52% 55% 45% / 50% 45% 55% 50%; }
+      50% { transform: translate(3%, -3%) rotate(-10deg); border-radius: 40% 60% 45% 55% / 60% 50% 50% 40%; }
+    }
+    @keyframes drift-3 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; }
+      50% { transform: translate(-3%, -2%) rotate(12deg); border-radius: 45% 55% 58% 42% / 52% 42% 58% 48%; }
+    }
+    @keyframes drift-4 {
+      0%, 100% { transform: translate(0, 0) scale(1); border-radius: 50% 50% 48% 52% / 52% 48% 52% 48%; }
+      50% { transform: translate(2%, 2%) scale(1.06); border-radius: 46% 54% 52% 48% / 48% 52% 48% 52%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blob { animation: none !important; }
+    }
+  </style>
 </head>
 <body>
+  <!-- Background art: nested organic twilight blobs -->
+  <div class="bg-art">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+  </div>
   <header>
     <h1>Afterglow</h1>
     <p class="tagline">For the hours when the world feels heavy</p>
@@ -232,10 +320,6 @@
       <p class="crisis-note">You matter. Help is available 24/7.</p>
     </section>
   </main>
-
-  <footer>
-    <p>Afterglow - You are not alone in the dark.</p>
-  </footer>
 
   <!-- Floating SOS Help Button -->
   <button id="help-fab" class="help-fab" title="Get help now">?</button>

@@ -6,7 +6,7 @@
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #0d0b1a;
+  background: #1E2655;
   color: #c8c0d8;
   min-height: 100vh;
   line-height: 1.6;
@@ -15,20 +15,23 @@ body {
 header {
   text-align: center;
   padding: 2.5rem 1rem 1.5rem;
-  background: linear-gradient(180deg, #1a1530 0%, #0d0b1a 100%);
 }
 
 header h1 {
-  font-size: 2.2rem;
-  color: #a78bfa;
-  font-weight: 300;
-  letter-spacing: 0.15em;
+  font-family: 'Nunito', sans-serif;
+  font-size: 2.6rem;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 4px rgba(30, 38, 85, 0.6), 0 6px 24px rgba(30, 38, 85, 0.45);
 }
 
 .tagline {
-  color: #6b5f82;
+  font-family: 'Nunito', sans-serif;
+  color: #ffffff;
   font-size: 0.95rem;
   margin-top: 0.3rem;
+  text-shadow: 0 1px 3px rgba(30, 38, 85, 0.65), 0 3px 14px rgba(30, 38, 85, 0.5);
 }
 
 main {
@@ -38,22 +41,25 @@ main {
 }
 
 .card {
-  background: #16122a;
-  border: 1px solid #2a2445;
-  border-radius: 12px;
+  background: rgba(30, 38, 85, 0.55);
+  border: 1px solid rgba(80, 41, 91, 0.9);
+  border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(30, 38, 85, 0.35);
 }
 
 .card h2 {
-  color: #c4b5fd;
+  color: #ffffff;
+  font-family: 'Nunito', sans-serif;
   font-size: 1.15rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.3rem;
 }
 
 .subtitle {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -62,7 +68,7 @@ main {
 .question-block {
   margin-bottom: 1.2rem;
   padding-bottom: 1.2rem;
-  border-bottom: 1px solid #2a2445;
+  border-bottom: 1px solid rgba(80, 41, 91, 0.6);
 }
 
 .question-block:last-of-type {
@@ -71,7 +77,7 @@ main {
 }
 
 .question-text {
-  color: #c8c0d8;
+  color: #f4e6cf;
   font-size: 0.95rem;
   margin-bottom: 0.7rem;
   font-weight: 500;
@@ -86,8 +92,8 @@ main {
 
 .scale-btn,
 .yesno-btn {
-  background: #1e1a35;
-  border: 2px solid #2a2445;
+  background: rgba(30, 38, 85, 0.6);
+  border: 2px solid #50295B;
   border-radius: 8px;
   padding: 0.6rem 0.9rem;
   cursor: pointer;
@@ -99,21 +105,21 @@ main {
 
 .scale-btn:hover,
 .yesno-btn:hover {
-  border-color: #7c5cbf;
-  background: #221e3a;
+  border-color: #FCAE01;
+  background: rgba(30, 38, 85, 0.8);
 }
 
 .scale-btn.selected,
 .yesno-btn.selected {
-  border-color: #a78bfa;
-  background: #2a2250;
+  border-color: #FCAE01;
+  background: rgba(252, 174, 1, 0.15);
 }
 
 .scale-labels {
   display: flex;
   justify-content: space-between;
   font-size: 0.7rem;
-  color: #4a4260;
+  color: #9a8dbf;
   margin-top: 0.3rem;
   padding: 0 0.5rem;
 }
@@ -130,110 +136,119 @@ main {
 }
 
 .feature-card {
-  background: #1e1a35;
-  border: 1px solid #2a2445;
-  border-radius: 10px;
+  background: rgba(30, 38, 85, 0.4);
+  border: 1px solid rgba(80, 41, 91, 0.7);
+  border-radius: 12px;
   padding: 1rem;
   text-align: center;
   transition: border-color 0.2s ease;
 }
 
 .feature-card.recommended {
-  border-color: #7c5cbf;
-  background: #221e3a;
+  border-color: #FCAE01;
+  background: rgba(252, 174, 1, 0.1);
 }
 
 .feature-card h3 {
-  color: #c4b5fd;
+  color: #f4e6cf;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.95rem;
   margin-bottom: 0.3rem;
 }
 
 .feature-card p {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.75rem;
   margin-bottom: 0.6rem;
 }
 
 .feature-btn {
-  background: #2a2250;
-  border: 1px solid #3a3355;
-  color: #c4b5fd;
-  border-radius: 6px;
+  background: rgba(80, 41, 91, 0.8);
+  border: 1px solid #50295B;
+  color: #f4e6cf;
+  border-radius: 8px;
   padding: 0.35rem 1rem;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
 }
 
 .feature-btn:hover {
-  background: #7c5cbf;
+  background: #FE581D;
   color: white;
-  border-color: #7c5cbf;
+  border-color: #FE581D;
 }
 
 /* Textarea */
 textarea {
   width: 100%;
-  background: #1e1a35;
-  border: 1px solid #2a2445;
+  background: rgba(30, 38, 85, 0.6);
+  border: 1px solid #50295B;
   border-radius: 8px;
-  color: #c8c0d8;
+  color: #f4e6cf;
   padding: 0.8rem;
   font-family: inherit;
   font-size: 0.9rem;
   resize: vertical;
   min-height: 60px;
+  max-height: 150px;
   margin-bottom: 0.8rem;
 }
 
 textarea:focus {
   outline: none;
-  border-color: #7c5cbf;
+  border-color: #FCAE01;
 }
 
 textarea::placeholder {
-  color: #4a4260;
+  color: #9a8dbf;
 }
 
 /* Buttons */
 .primary-btn {
-  background: #7c5cbf;
+  font-family: 'Nunito', sans-serif;
+  background: #FE581D;
   color: white;
   border: none;
   border-radius: 8px;
   padding: 0.7rem 1.5rem;
   font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: background 0.2s ease;
   width: 100%;
 }
 
 .primary-btn:hover:not(:disabled) {
-  background: #6b4aaf;
+  background: #FCAE01;
 }
 
 .primary-btn:disabled {
-  background: #3a3355;
-  color: #6b5f82;
+  background: #50295B;
+  color: #9a8dbf;
   cursor: not-allowed;
 }
 
 .secondary-btn {
+  font-family: 'Nunito', sans-serif;
   background: transparent;
-  color: #8b7faa;
-  border: 1px solid #2a2445;
+  color: #c8c0d8;
+  border: 1px solid rgba(80, 41, 91, 0.9);
   border-radius: 8px;
   padding: 0.6rem 1.5rem;
   font-size: 0.9rem;
   cursor: pointer;
   width: 100%;
   margin-top: 0.5rem;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .secondary-btn:hover {
-  border-color: #7c5cbf;
+  border-color: #FCAE01;
+  color: #FCAE01;
 }
 
 /* Sounds Area */
@@ -251,8 +266,8 @@ textarea::placeholder {
 .sound-btn {
   flex: 1;
   min-width: 120px;
-  background: #1e1a35;
-  border: 2px solid #2a2445;
+  background: rgba(30, 38, 85, 0.4);
+  border: 2px solid #50295B;
   border-radius: 10px;
   padding: 0.8rem 0.6rem;
   color: #c8c0d8;
@@ -266,19 +281,19 @@ textarea::placeholder {
 }
 
 .sound-btn:hover {
-  border-color: #7c5cbf;
-  background: #221e3a;
+  border-color: #FE581D;
+  background: rgba(254, 88, 29, 0.1);
 }
 
 .sound-btn.active {
-  border-color: #a78bfa;
-  background: #2a2250;
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.2);
+  border-color: #FCAE01;
+  background: rgba(252, 174, 1, 0.15);
+  box-shadow: 0 0 12px rgba(252, 174, 1, 0.2);
 }
 
 .sound-icon {
   font-size: 1.3rem;
-  color: #a78bfa;
+  color: #FCAE01;
 }
 
 .volume-control {
@@ -288,7 +303,7 @@ textarea::placeholder {
 }
 
 .volume-control label {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.85rem;
   white-space: nowrap;
 }
@@ -298,7 +313,7 @@ textarea::placeholder {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
-  background: #2a2445;
+  background: #50295B;
   border-radius: 3px;
   outline: none;
 }
@@ -309,7 +324,7 @@ textarea::placeholder {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #7c5cbf;
+  background: #FE581D;
   cursor: pointer;
 }
 
@@ -322,21 +337,22 @@ textarea::placeholder {
 }
 
 .game-card {
-  background: #1e1a35;
-  border: 1px solid #2a2445;
-  border-radius: 10px;
+  background: rgba(30, 38, 85, 0.4);
+  border: 1px solid rgba(80, 41, 91, 0.7);
+  border-radius: 12px;
   padding: 1rem;
   text-align: center;
 }
 
 .game-card h3 {
-  color: #c4b5fd;
+  color: #f4e6cf;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.95rem;
   margin-bottom: 0.3rem;
 }
 
 .game-card p {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.75rem;
   margin-bottom: 0.6rem;
 }
@@ -349,7 +365,8 @@ textarea::placeholder {
 }
 
 .game-header h3 {
-  color: #c4b5fd;
+  color: #f4e6cf;
+  font-family: 'Nunito', sans-serif;
   font-size: 1rem;
   flex: 1;
 }
@@ -364,8 +381,8 @@ textarea::placeholder {
 #draw-canvas {
   width: 100%;
   height: 350px;
-  background: #1e1a35;
-  border: 1px solid #2a2445;
+  background: rgba(30, 38, 85, 0.6);
+  border: 1px solid #50295B;
   border-radius: 10px;
   cursor: none;
   touch-action: none;
@@ -375,8 +392,8 @@ textarea::placeholder {
 #aim-canvas {
   width: 100%;
   height: 350px;
-  background: #1e1a35;
-  border: 1px solid #2a2445;
+  background: rgba(30, 38, 85, 0.6);
+  border: 1px solid #50295B;
   border-radius: 10px;
   cursor: crosshair;
   touch-action: none;
@@ -386,8 +403,8 @@ textarea::placeholder {
 #firefly-canvas {
   width: 100%;
   height: 350px;
-  background: #0a0a1a;
-  border: 1px solid #2a2445;
+  background: rgba(10, 10, 26, 0.8);
+  border: 1px solid #50295B;
   border-radius: 10px;
   cursor: pointer;
   touch-action: none;
@@ -402,7 +419,7 @@ textarea::placeholder {
 
 #brush-cursor {
   position: absolute;
-  border: 2px solid rgba(167, 139, 250, 0.7);
+  border: 2px solid rgba(252, 174, 1, 0.7);
   border-radius: 50%;
   pointer-events: none;
   display: none;
@@ -447,8 +464,8 @@ textarea::placeholder {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid #2a2445;
-  background: #1e1a35;
+  border: 2px solid #50295B;
+  background: rgba(30, 38, 85, 0.6);
   color: #c8c0d8;
   font-size: 0.75rem;
   font-weight: 600;
@@ -460,23 +477,24 @@ textarea::placeholder {
 }
 
 .draw-tool-btn:hover {
-  border-color: #7c5cbf;
+  border-color: #FCAE01;
 }
 
 .draw-tool-btn.active {
-  border-color: #a78bfa;
-  background: #2a2250;
-  color: #a78bfa;
+  border-color: #FCAE01;
+  background: rgba(252, 174, 1, 0.15);
+  color: #FCAE01;
 }
 
 #aim-score {
-  color: #a78bfa;
+  color: #FCAE01;
+  font-family: 'Nunito', sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
 }
 
 #aim-timer {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.85rem;
 }
 
@@ -514,7 +532,8 @@ textarea::placeholder {
 }
 
 .penpal-peer-name {
-  color: #a78bfa;
+  color: #FCAE01;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -527,10 +546,10 @@ textarea::placeholder {
 
 #penpal-alias-form input {
   flex: 1;
-  background: #1e1a35;
-  border: 1px solid #2a2445;
+  background: rgba(30, 38, 85, 0.6);
+  border: 1px solid #50295B;
   border-radius: 8px;
-  color: #c8c0d8;
+  color: #f4e6cf;
   padding: 0.7rem 0.8rem;
   font-family: inherit;
   font-size: 0.95rem;
@@ -538,7 +557,7 @@ textarea::placeholder {
 
 #penpal-alias-form input:focus {
   outline: none;
-  border-color: #7c5cbf;
+  border-color: #FCAE01;
 }
 
 #penpal-alias-form .primary-btn {
@@ -548,8 +567,8 @@ textarea::placeholder {
 }
 
 .penpal-inbox-item {
-  background: #1e1a35;
-  border: 1px solid #2a2445;
+  background: rgba(30, 38, 85, 0.4);
+  border: 1px solid rgba(80, 41, 91, 0.7);
   border-radius: 10px;
   padding: 0.9rem 1rem;
   margin-bottom: 0.6rem;
@@ -558,8 +577,8 @@ textarea::placeholder {
 }
 
 .penpal-inbox-item:hover {
-  border-color: #7c5cbf;
-  background: #221e3a;
+  border-color: #FCAE01;
+  background: rgba(252, 174, 1, 0.08);
 }
 
 .penpal-thread-closed-item {
@@ -574,13 +593,14 @@ textarea::placeholder {
 }
 
 .penpal-inbox-peer {
-  color: #c4b5fd;
+  color: #f4e6cf;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .penpal-unread-badge {
-  background: #7c5cbf;
+  background: #FE581D;
   color: white;
   font-size: 0.7rem;
   font-weight: 600;
@@ -591,7 +611,7 @@ textarea::placeholder {
 }
 
 .penpal-inbox-preview {
-  color: #6b5f82;
+  color: #9a8dbf;
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
   overflow: hidden;
@@ -606,20 +626,30 @@ textarea::placeholder {
 }
 
 .penpal-inbox-time {
-  color: #4a4260;
+  color: #9a8dbf;
   font-size: 0.75rem;
 }
 
 .penpal-inbox-count {
-  color: #4a4260;
+  color: #9a8dbf;
   font-size: 0.7rem;
 }
 
 #penpal-thread-messages {
-  max-height: 400px;
+  max-height: 350px;
   overflow-y: auto;
   margin-bottom: 1rem;
   padding: 0.5rem 0;
+}
+
+#penpal-section {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#penpal-inbox-list {
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .penpal-message {
@@ -630,19 +660,19 @@ textarea::placeholder {
 }
 
 .penpal-message-me {
-  background: #2a2250;
-  border-left: 3px solid #7c5cbf;
+  background: rgba(254, 88, 29, 0.2);
+  border-left: 3px solid #FE581D;
   margin-left: auto;
 }
 
 .penpal-message-them {
-  background: #1e1a35;
-  border-left: 3px solid #4a3f6b;
+  background: rgba(30, 38, 85, 0.6);
+  border-left: 3px solid #50295B;
 }
 
 .penpal-message p {
   font-size: 0.9rem;
-  color: #c8c0d8;
+  color: #f4e6cf;
 }
 
 #penpal-thread-form {
@@ -681,7 +711,7 @@ textarea::placeholder {
 }
 
 .error-text {
-  color: #fca5a5;
+  color: #FF6F91;
   font-size: 0.85rem;
   margin-top: 0.5rem;
 }
@@ -691,20 +721,25 @@ textarea::placeholder {
 }
 
 #penpal-thread-messages::-webkit-scrollbar-track {
-  background: #1e1a35;
+  background: rgba(30, 38, 85, 0.4);
 }
 
 #penpal-thread-messages::-webkit-scrollbar-thumb {
-  background: #3a3355;
+  background: #50295B;
   border-radius: 3px;
 }
 
 /* Buddy Chat */
 #buddy-chat-messages {
-  max-height: 500px;
+  max-height: 400px;
   overflow-y: auto;
   margin-bottom: 1rem;
   padding: 0.5rem 0;
+}
+
+#buddy-section {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .buddy-message {
@@ -715,19 +750,19 @@ textarea::placeholder {
 }
 
 .buddy-message-me {
-  background: #2a2250;
-  border-left: 3px solid #7c5cbf;
+  background: rgba(252, 174, 1, 0.15);
+  border-left: 3px solid #FCAE01;
   margin-left: auto;
 }
 
 .buddy-message-them {
-  background: #1e1a35;
-  border-left: 3px solid #4a3f6b;
+  background: rgba(30, 38, 85, 0.6);
+  border-left: 3px solid #50295B;
 }
 
 .buddy-message p {
   font-size: 0.9rem;
-  color: #c8c0d8;
+  color: #f4e6cf;
 }
 
 #buddy-chat-form {
@@ -764,22 +799,23 @@ textarea::placeholder {
 }
 
 #buddy-chat-messages::-webkit-scrollbar-track {
-  background: #1e1a35;
+  background: rgba(30, 38, 85, 0.4);
 }
 
 #buddy-chat-messages::-webkit-scrollbar-thumb {
-  background: #3a3355;
+  background: #50295B;
   border-radius: 3px;
 }
 
 /* Crisis Section */
 .crisis-card {
-  border-color: #7f1d1d;
-  background: #1c1017;
+  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(28, 16, 23, 0.7);
 }
 
 .crisis-card h2 {
-  color: #fca5a5;
+  color: #FF6F91;
+  font-family: 'Nunito', sans-serif;
 }
 
 .crisis-card ul {
@@ -790,13 +826,13 @@ textarea::placeholder {
 
 .crisis-card li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #2a1a1a;
+  border-bottom: 1px solid rgba(80, 41, 91, 0.4);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .crisis-card a {
-  color: #93c5fd;
+  color: #FCAE01;
   text-decoration: none;
 }
 
@@ -805,7 +841,7 @@ textarea::placeholder {
 }
 
 .crisis-note {
-  color: #fca5a5;
+  color: #FF6F91;
   font-style: italic;
   font-size: 0.9rem;
 }
@@ -858,11 +894,12 @@ textarea::placeholder {
   width: 320px;
   max-height: 70vh;
   overflow-y: auto;
-  background: #1c1017;
-  border: 1px solid #7f1d1d;
+  background: rgba(28, 16, 23, 0.85);
+  border: 1px solid rgba(220, 38, 38, 0.5);
   border-radius: 12px;
   padding: 1.2rem;
   z-index: 1001;
+  backdrop-filter: blur(10px);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -878,7 +915,8 @@ textarea::placeholder {
 }
 
 .help-panel-header h3 {
-  color: #fca5a5;
+  color: #FF6F91;
+  font-family: 'Nunito', sans-serif;
   font-size: 1.05rem;
   font-weight: 500;
 }
@@ -886,7 +924,7 @@ textarea::placeholder {
 .help-panel-close {
   background: none;
   border: none;
-  color: #8b7faa;
+  color: #9a8dbf;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0 0.3rem;
@@ -894,7 +932,7 @@ textarea::placeholder {
 }
 
 .help-panel-close:hover {
-  color: #fca5a5;
+  color: #FF6F91;
 }
 
 .help-panel ul {
@@ -905,7 +943,7 @@ textarea::placeholder {
 
 .help-panel li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #2a1a1a;
+  border-bottom: 1px solid rgba(80, 41, 91, 0.4);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -915,7 +953,7 @@ textarea::placeholder {
 }
 
 .help-panel a {
-  color: #93c5fd;
+  color: #FCAE01;
   text-decoration: none;
 }
 
@@ -924,7 +962,7 @@ textarea::placeholder {
 }
 
 .help-panel .crisis-note {
-  color: #fca5a5;
+  color: #FF6F91;
   font-style: italic;
   font-size: 0.85rem;
   margin-top: 0.5rem;
@@ -958,18 +996,27 @@ textarea::placeholder {
 }
 
 .user-greeting {
-  color: #6b5f82;
   font-size: 0.85rem;
 }
 
-.user-greeting strong {
-  color: #a78bfa;
+.user-label {
+  color: #ffffff;
+}
+
+.user-name {
+  color: #FF6F91;
+}
+
+.login-link-btn {
+  width: auto;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.85rem;
 }
 
 .logout-btn {
   background: none;
-  border: 1px solid #2a2445;
-  color: #6b5f82;
+  border: 1px solid rgba(80, 41, 91, 0.9);
+  color: #9a8dbf;
   border-radius: 6px;
   padding: 0.25rem 0.7rem;
   font-size: 0.8rem;
@@ -978,14 +1025,14 @@ textarea::placeholder {
 }
 
 .logout-btn:hover {
-  border-color: #7c5cbf;
-  color: #a78bfa;
+  border-color: #FE581D;
+  color: #FE581D;
 }
 
 footer {
   text-align: center;
   padding: 2rem 1rem;
-  color: #3a3355;
+  color: #9a8dbf;
   font-size: 0.8rem;
 }
 

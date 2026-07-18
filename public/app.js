@@ -50,13 +50,13 @@ function initUserStatus() {
 
   if (user) {
     statusBar.innerHTML = `
-      <span class="user-greeting">Signed in as <strong>${escapeHtml(user)}</strong></span>
+      <span class="user-greeting"><span class="user-label">Signed in as</span> <strong class="user-name">${escapeHtml(user)}</strong></span>
       <button id="logout-btn" class="logout-btn">Sign Out</button>
     `;
   } else {
     statusBar.innerHTML = `
-      <span class="user-greeting">Browsing as <strong>Guest</strong></span>
-      <button id="login-link-btn" class="logout-btn">Sign In</button>
+      <span class="user-greeting"><span class="user-label">Browsing as</span> <strong class="user-name">Guest</strong></span>
+      <button id="login-link-btn" class="primary-btn login-link-btn">Sign In</button>
     `;
   }
 
@@ -381,7 +381,10 @@ const audioBufferCache = {};
 async function loadAudioBuffer(url) {
   if (audioBufferCache[url]) return audioBufferCache[url];
   const ctx = getAudioCtx();
-  const resp = await fetch(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  const resp = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeout);
   const data = await resp.arrayBuffer();
   const buf = await ctx.decodeAudioData(data);
   audioBufferCache[url] = buf;
@@ -400,7 +403,7 @@ function startRain() {
   bp.Q.value = 0.5;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.4;
+  gain.gain.value = 0.15;
 
   src.connect(bp);
   bp.connect(gain);
@@ -487,7 +490,7 @@ function startWhiteNoise() {
   src.loop = true;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.3;
+  gain.gain.value = 0.12;
 
   src.connect(gain);
   gain.connect(getMasterGain());
@@ -510,7 +513,7 @@ async function startCampfire() {
   src.loop = true;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.35;
+  gain.gain.value = 0.7;
 
   src.connect(gain);
   gain.connect(getMasterGain());
@@ -559,7 +562,7 @@ async function startCrickets() {
   src.loop = true;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.3;
+  gain.gain.value = 0.6;
 
   src.connect(gain);
   gain.connect(getMasterGain());
@@ -607,22 +610,34 @@ function stopBinaural() {
 }
 
 const LOFI_TRACKS = [
-  "sounds/lofi-01.mp3", "sounds/lofi-02.mp3", "sounds/lofi-03.mp3",
-  "sounds/lofi-04.mp3", "sounds/lofi-05.mp3", "sounds/lofi-06.mp3",
-  "sounds/lofi-07.mp3", "sounds/lofi-08.mp3", "sounds/lofi-09.mp3",
-  "sounds/lofi-10.mp3"
+  "sounds/lofi-01.mp3", "sounds/lofi-02.mp3"
 ];
 
 async function startLofi() {
   const ctx = getAudioCtx();
   const url = LOFI_TRACKS[Math.floor(Math.random() * LOFI_TRACKS.length)];
-  const buf = await loadAudioBuffer(url);
+  let buf;
+  try {
+    buf = await loadAudioBuffer(url);
+  } catch (e) {
+    for (const fallbackUrl of LOFI_TRACKS) {
+      if (fallbackUrl === url) continue;
+      try {
+        buf = await loadAudioBuffer(fallbackUrl);
+        break;
+      } catch {}
+    }
+    if (!buf) {
+      console.warn("All lo-fi tracks failed to load");
+      return;
+    }
+  }
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.loop = true;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.4;
+  gain.gain.value = 0.5;
 
   src.connect(gain);
   gain.connect(getMasterGain());
@@ -638,25 +653,42 @@ function stopLofi() {
 }
 
 const CHOPIN_TRACKS = [
-  "sounds/chopin-01.mp3", "sounds/chopin-02.mp3", "sounds/chopin-03.mp3",
-  "sounds/chopin-04.mp3", "sounds/chopin-05.mp3"
+  "sounds/chopin-01.mp3", "sounds/chopin-02.mp3"
 ];
 
 async function startClassical() {
   const ctx = getAudioCtx();
   const url = CHOPIN_TRACKS[Math.floor(Math.random() * CHOPIN_TRACKS.length)];
-  const buf = await loadAudioBuffer(url);
+  let buf;
+  try {
+    buf = await loadAudioBuffer(url);
+  } catch (e) {
+    for (const fallbackUrl of CHOPIN_TRACKS) {
+      if (fallbackUrl === url) continue;
+      try {
+        buf = await loadAudioBuffer(fallbackUrl);
+        break;
+      } catch {}
+    }
+    if (!buf) {
+      console.warn("All classical tracks failed to load");
+      return;
+    }
+  }
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.loop = true;
 
   const gain = ctx.createGain();
-  gain.gain.value = 0.4;
+  gain.gain.value = 0.5;
 
   src.connect(gain);
   gain.connect(getMasterGain());
   src.start();
   soundNodes.classical = { src, gain };
+
+  // Track current track for display (optional)
+  soundNodes.classical.currentTrack = url;
 }
 
 function stopClassical() {
@@ -706,6 +738,14 @@ function showSoundsSection() {
   const section = document.getElementById("sounds-area");
   section.classList.remove("hidden");
   section.scrollIntoView({ behavior: "smooth" });
+  // Preload audio files so they play instantly on click
+  if (!window._preloaded) {
+    window._preloaded = true;
+    loadAudioBuffer("sounds/campfire.mp3");
+    loadAudioBuffer("sounds/crickets.mp3");
+    loadAudioBuffer("sounds/lofi-01.mp3");
+    loadAudioBuffer("sounds/chopin-01.mp3");
+  }
 }
 
 document.getElementById("close-sounds").addEventListener("click", () => {
@@ -1723,12 +1763,22 @@ async function loadRegionalCrisis() {
   let region = "DEFAULT";
 
   try {
-    const res = await fetch("https://ipapi.co/json/");
+    const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const data = await res.json();
       region = data.country_code || "DEFAULT";
     }
   } catch {}
+
+  if (region === "DEFAULT") {
+    try {
+      const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = await res.json();
+        region = data.country_code || "DEFAULT";
+      }
+    } catch {}
+  }
 
   try {
     const res = await authFetch(`${API}/api/hotlines/${region}`);
