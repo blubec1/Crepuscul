@@ -238,6 +238,7 @@
     document.getElementById("bypass-btn").addEventListener("click", () => {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem("easter_egg_cricket");
       window.location.href = "/index.html";
     });
   </script>

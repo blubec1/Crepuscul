@@ -73,6 +73,7 @@ function initUserStatus() {
     } catch {}
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("easter_egg_cricket");
     if (signalRConnection) signalRConnection.stop();
     if (buddyConnection) buddyConnection.stop();
     window.location.href = "/login.html";
@@ -526,7 +527,7 @@ function stopCampfire() {
 
 async function startCrickets() {
   const ctx = getAudioCtx();
-  if (localStorage.getItem("easter_egg_cricket") === "1") {
+  if (localStorage.getItem("easter_egg_cricket") === "1" && localStorage.getItem(USER_KEY) === "cricket") {
     const osc = ctx.createOscillator();
     osc.type = "sine";
     osc.frequency.value = 7000;
