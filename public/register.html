@@ -3,22 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< Updated upstream
   <title>Crepuscul - Create Account</title>
+=======
+  <title>Afterglow - Create Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+>>>>>>> Stashed changes
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0d0b1a;
       color: #c8c0d8;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       line-height: 1.6;
+      overflow-x: hidden;
+      padding: 2rem 1rem;
+      background: #1E2655;
+    }
+
+    /* Background art: nested organic twilight blobs with playful gradients */
+    .bg-art {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      opacity: 0.95;
+      will-change: transform, border-radius;
+    }
+
+    .blob-1 {
+      width: 140vmax;
+      height: 140vmax;
+      background: radial-gradient(circle at 35% 30%, #7A3A6E 0%, #50295B 45%, #1E2655 100%);
+      border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+      filter: blur(28px);
+      animation: drift-1 26s ease-in-out infinite;
+    }
+
+    .blob-2 {
+      width: 92vmax;
+      height: 92vmax;
+      background: radial-gradient(circle at 65% 40%, #FF6F91 0%, #F63851 40%, #7A2F55 100%);
+      border-radius: 48% 52% 40% 60% / 55% 45% 55% 45%;
+      filter: blur(24px);
+      animation: drift-2 22s ease-in-out infinite;
+    }
+
+    .blob-3 {
+      width: 56vmax;
+      height: 56vmax;
+      background: radial-gradient(circle at 40% 55%, #FF9A3D 0%, #FE581D 45%, #F63851 100%);
+      border-radius: 55% 45% 58% 42% / 45% 58% 42% 55%;
+      filter: blur(20px);
+      animation: drift-3 18s ease-in-out infinite;
+    }
+
+    .blob-4 {
+      width: 32vmax;
+      height: 32vmax;
+      background: radial-gradient(circle at 50% 45%, #FFE28A 0%, #FCAE01 45%, #FE7A1D 100%);
+      border-radius: 50% 50% 46% 54% / 52% 48% 52% 48%;
+      filter: blur(18px);
+      animation: drift-4 20s ease-in-out infinite;
+    }
+
+    @keyframes drift-1 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; }
+      50% { transform: translate(-2%, 3%) rotate(8deg); border-radius: 55% 45% 40% 60% / 55% 48% 52% 45%; }
+    }
+    @keyframes drift-2 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 48% 52% 55% 45% / 50% 45% 55% 50%; }
+      50% { transform: translate(3%, -3%) rotate(-10deg); border-radius: 40% 60% 45% 55% / 60% 50% 50% 40%; }
+    }
+    @keyframes drift-3 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; }
+      50% { transform: translate(-3%, -2%) rotate(12deg); border-radius: 45% 55% 58% 42% / 52% 42% 58% 48%; }
+    }
+    @keyframes drift-4 {
+      0%, 100% { transform: translate(0, 0) scale(1); border-radius: 50% 50% 48% 52% / 52% 48% 52% 48%; }
+      50% { transform: translate(2%, 2%) scale(1.06); border-radius: 46% 54% 52% 48% / 48% 52% 48% 52%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blob { animation: none !important; }
     }
 
     .login-container {
+      position: relative;
+      z-index: 1;
       width: 100%;
       max-width: 400px;
       padding: 1rem;
@@ -27,33 +113,40 @@
     header { text-align: center; margin-bottom: 2rem; }
 
     header h1 {
-      font-size: 2.2rem;
-      color: #a78bfa;
-      font-weight: 300;
-      letter-spacing: 0.15em;
+      font-family: 'Nunito', sans-serif;
+      font-size: 2.6rem;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-shadow: 0 2px 4px rgba(30, 38, 85, 0.6), 0 6px 24px rgba(30, 38, 85, 0.45);
     }
 
     .tagline {
-      color: #6b5f82;
+      font-family: 'Nunito', sans-serif;
+      color: #ffffff;
       font-size: 0.95rem;
       margin-top: 0.3rem;
+      text-shadow: 0 1px 3px rgba(30, 38, 85, 0.65), 0 3px 14px rgba(30, 38, 85, 0.5);
     }
 
+    /* Glassmorphic card */
     .login-card {
-      background: #16122a;
-      border: 1px solid #2a2445;
-      border-radius: 12px;
+      background: rgba(30, 38, 85, 0.55);
+      border: 1px solid rgba(80, 41, 91, 0.9);
+      border-radius: 16px;
       padding: 2rem 1.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 40px rgba(30, 38, 85, 0.35);
     }
 
     .auth-form { display: flex; flex-direction: column; gap: 0.8rem; }
 
     .auth-form input {
       width: 100%;
-      background: #1e1a35;
-      border: 1px solid #2a2445;
+      background: rgba(30, 38, 85, 0.6);
+      border: 1px solid #50295B;
       border-radius: 8px;
-      color: #c8c0d8;
+      color: #f4e6cf;
       padding: 0.8rem 1rem;
       font-family: inherit;
       font-size: 0.95rem;
@@ -62,34 +155,37 @@
 
     .auth-form input:focus {
       outline: none;
-      border-color: #7c5cbf;
+      border-color: #FCAE01;
     }
 
-    .auth-form input::placeholder { color: #4a4260; }
+    .auth-form input::placeholder { color: #9a8dbf; }
 
     .primary-btn {
-      background: #7c5cbf;
+      font-family: 'Nunito', sans-serif;
+      background: #FE581D;
       color: white;
       border: none;
       border-radius: 8px;
       padding: 0.75rem 1.5rem;
       font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       cursor: pointer;
       transition: background 0.2s;
       width: 100%;
       margin-top: 0.3rem;
     }
 
-    .primary-btn:hover { background: #6b4aaf; }
+    .primary-btn:hover { background: #FCAE01; }
 
     .primary-btn:disabled {
-      background: #3a3355;
-      color: #6b5f82;
+      background: #50295B;
+      color: #9a8dbf;
       cursor: not-allowed;
     }
 
     .error-msg {
-      color: #fca5a5;
+      color: #FF6F91;
       font-size: 0.85rem;
       text-align: center;
       margin-top: 0.3rem;
@@ -99,27 +195,31 @@
       text-align: center;
       margin-top: 1.2rem;
       font-size: 0.85rem;
-      color: #6b5f82;
+      color: #9a8dbf;
     }
 
     .login-link a {
-      color: #a78bfa;
+      color: #FCAE01;
       text-decoration: none;
+      font-weight: 600;
     }
 
     .login-link a:hover {
       text-decoration: underline;
     }
 
-    footer {
-      text-align: center;
-      margin-top: 2rem;
-      color: #3a3355;
-      font-size: 0.8rem;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
+  <!-- Background art: nested organic twilight blobs -->
+  <div class="bg-art">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+  </div>
+
   <div class="login-container">
     <header>
       <h1>Crepuscul</h1>
@@ -136,8 +236,11 @@
 
       <p class="login-link">Already have an account? <a href="/login.html">Sign in</a></p>
     </div>
+<<<<<<< Updated upstream
 
     <footer>Crepuscul - You are not alone in the dark.</footer>
+=======
+>>>>>>> Stashed changes
   </div>
 
   <script>

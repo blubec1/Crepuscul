@@ -3,10 +3,574 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< Updated upstream
   <title>Crepuscul - You Are Not Alone</title>
   <link rel="stylesheet" href="styles.css">
+=======
+  <title>Afterglow - You Are Not Alone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #c8c0d8;
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      padding: 2rem 1rem 4rem;
+      background: #1E2655;
+    }
+
+    /* Background art: nested organic twilight blobs with playful gradients */
+    .bg-art {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      opacity: 0.95;
+      will-change: transform, border-radius;
+    }
+
+    .blob-1 {
+      width: 140vmax;
+      height: 140vmax;
+      background: radial-gradient(circle at 35% 30%, #7A3A6E 0%, #50295B 45%, #1E2655 100%);
+      border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+      filter: blur(28px);
+      animation: drift-1 26s ease-in-out infinite;
+    }
+
+    .blob-2 {
+      width: 92vmax;
+      height: 92vmax;
+      background: radial-gradient(circle at 65% 40%, #FF6F91 0%, #F63851 40%, #7A2F55 100%);
+      border-radius: 48% 52% 40% 60% / 55% 45% 55% 45%;
+      filter: blur(24px);
+      animation: drift-2 22s ease-in-out infinite;
+    }
+
+    .blob-3 {
+      width: 56vmax;
+      height: 56vmax;
+      background: radial-gradient(circle at 40% 55%, #FF9A3D 0%, #FE581D 45%, #F63851 100%);
+      border-radius: 55% 45% 58% 42% / 45% 58% 42% 55%;
+      filter: blur(20px);
+      animation: drift-3 18s ease-in-out infinite;
+    }
+
+    .blob-4 {
+      width: 32vmax;
+      height: 32vmax;
+      background: radial-gradient(circle at 50% 45%, #FFE28A 0%, #FCAE01 45%, #FE7A1D 100%);
+      border-radius: 50% 50% 46% 54% / 52% 48% 52% 48%;
+      filter: blur(18px);
+      animation: drift-4 20s ease-in-out infinite;
+    }
+
+    @keyframes drift-1 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; }
+      50% { transform: translate(-2%, 3%) rotate(8deg); border-radius: 55% 45% 40% 60% / 55% 48% 52% 45%; }
+    }
+    @keyframes drift-2 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 48% 52% 55% 45% / 50% 45% 55% 50%; }
+      50% { transform: translate(3%, -3%) rotate(-10deg); border-radius: 40% 60% 45% 55% / 60% 50% 50% 40%; }
+    }
+    @keyframes drift-3 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; }
+      50% { transform: translate(-3%, -2%) rotate(12deg); border-radius: 45% 55% 58% 42% / 52% 42% 58% 48%; }
+    }
+    @keyframes drift-4 {
+      0%, 100% { transform: translate(0, 0) scale(1); border-radius: 50% 50% 48% 52% / 52% 48% 52% 48%; }
+      50% { transform: translate(2%, 2%) scale(1.06); border-radius: 46% 54% 52% 48% / 48% 52% 48% 52%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blob { animation: none !important; }
+    }
+
+    /* Layout */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 3rem;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-shadow: 0 2px 4px rgba(30, 38, 85, 0.6), 0 6px 24px rgba(30, 38, 85, 0.45);
+    }
+
+    .tagline {
+      font-family: 'Nunito', sans-serif;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      margin-top: 0.4rem;
+      text-shadow: 0 1px 3px rgba(30, 38, 85, 0.65), 0 3px 14px rgba(30, 38, 85, 0.5);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Glassmorphic card */
+    .card {
+      background: rgba(30, 38, 85, 0.55);
+      border: 1px solid rgba(80, 41, 91, 0.9);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 40px rgba(30, 38, 85, 0.35);
+    }
+
+    .card h2 {
+      font-family: 'Nunito', sans-serif;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .subtitle {
+      color: #9a8dbf;
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Buttons */
+    .primary-btn {
+      font-family: 'Nunito', sans-serif;
+      background: #FE581D;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.3rem;
+    }
+
+    .primary-btn:hover { background: #FCAE01; }
+
+    .primary-btn:disabled {
+      background: #50295B;
+      color: #9a8dbf;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      font-family: 'Nunito', sans-serif;
+      background: transparent;
+      color: #f4e6cf;
+      border: 1px solid #50295B;
+      border-radius: 8px;
+      padding: 0.7rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .secondary-btn:hover {
+      border-color: #FCAE01;
+      color: #FCAE01;
+    }
+
+    /* Inputs & textareas */
+    textarea, input {
+      width: 100%;
+      background: rgba(30, 38, 85, 0.6);
+      border: 1px solid #50295B;
+      border-radius: 8px;
+      color: #f4e6cf;
+      padding: 0.8rem 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #FCAE01;
+    }
+
+    textarea::placeholder, input::placeholder { color: #9a8dbf; }
+
+    /* Questions */
+    #questions-container { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.25rem; }
+
+    .question-block { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .question-text {
+      font-family: 'Nunito', sans-serif;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .scale-buttons, .yesno-buttons { display: flex; gap: 0.5rem; }
+
+    .scale-btn, .yesno-btn {
+      flex: 1;
+      padding: 0.6rem 0;
+      border: 2px solid #50295B;
+      border-radius: 8px;
+      background: rgba(30, 38, 85, 0.6);
+      color: #f4e6cf;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .scale-btn:hover, .yesno-btn:hover {
+      border-color: #FCAE01;
+      color: #FCAE01;
+    }
+
+    .scale-btn.selected, .yesno-btn.selected {
+      background: #FCAE01;
+      border-color: #FCAE01;
+      color: #1E2655;
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #9a8dbf;
+    }
+
+    /* Features grid */
+    #features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 480px) {
+      #features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .feature-card {
+      background: rgba(30, 38, 85, 0.6);
+      border: 1px solid #50295B;
+      border-radius: 12px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover { border-color: #FCAE01; }
+    .feature-card.recommended { border-color: #FCAE01; }
+
+    .feature-card h3 {
+      font-family: 'Nunito', sans-serif;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .feature-card p { color: #9a8dbf; font-size: 0.85rem; }
+
+    .feature-btn {
+      font-family: 'Nunito', sans-serif;
+      background: #FE581D;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-start;
+      margin-top: 0.3rem;
+    }
+
+    .feature-btn:hover { background: #FCAE01; }
+
+    /* Exercise timer */
+    #timer-circle {
+      width: 160px;
+      height: 160px;
+      margin: 1.5rem auto;
+      border-radius: 50%;
+      border: 3px solid #FCAE01;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(252, 174, 1, 0.35);
+    }
+
+    #timer-text {
+      font-family: 'Nunito', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Chat + message areas */
+    #buddy-chat-messages, #messages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .message-item {
+      background: rgba(30, 38, 85, 0.6);
+      border: 1px solid #50295B;
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+    }
+
+    .message-item p { font-size: 0.9rem; color: #f4e6cf; }
+
+    .message-item .message-time {
+      font-size: 0.75rem;
+      color: #9a8dbf;
+      margin-top: 0.3rem;
+    }
+
+    .message-user { color: #9a8dbf; font-size: 0.8rem; }
+
+    #buddy-chat-form, #message-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    #buddy-chat-actions { display: flex; gap: 0.75rem; }
+
+    #buddy-chat-actions .primary-btn,
+    #buddy-chat-actions .secondary-btn { margin-top: 0; }
+
+    .buddy-message {
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      max-width: 80%;
+    }
+
+    .buddy-message-me {
+      background: rgba(254, 88, 29, 0.25);
+      border: 1px solid #FE581D;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .buddy-message-them {
+      background: rgba(30, 38, 85, 0.6);
+      border: 1px solid #50295B;
+      align-self: flex-start;
+    }
+
+    .buddy-message p { font-size: 0.9rem; color: #f4e6cf; }
+
+    .buddy-message .message-time {
+      font-size: 0.75rem;
+      color: #9a8dbf;
+      margin-top: 0.3rem;
+    }
+
+    /* Crisis card accent */
+    .crisis-card { border-color: rgba(246, 56, 81, 0.9); }
+    .crisis-card h2 { color: #FF6F91; }
+
+    #crisis-list, #help-panel-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    #crisis-list li, #help-panel-list li {
+      padding: 0.6rem 0.8rem;
+      background: rgba(30, 38, 85, 0.6);
+      border-radius: 8px;
+      border: 1px solid #50295B;
+    }
+
+    #crisis-list a, #help-panel-list a { color: #FCAE01; text-decoration: none; }
+    #crisis-list a:hover, #help-panel-list a:hover { text-decoration: underline; }
+
+    .crisis-note {
+      color: #FCAE01;
+      font-weight: 600;
+      font-family: 'Nunito', sans-serif;
+      margin-top: 0.5rem;
+    }
+
+    /* Success message */
+    .success-message {
+      color: #FFE28A;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    /* User Status Bar */
+    .user-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+    }
+
+    .user-greeting { color: #ffffff; }
+    .user-greeting strong { color: #F63851; }
+
+    .logout-btn {
+      font-family: 'Nunito', sans-serif;
+      background: transparent;
+      border: 1px solid #50295B;
+      color: #9a8dbf;
+      border-radius: 6px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .logout-btn:hover { border-color: #FCAE01; color: #FCAE01; }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #9a8dbf;
+      font-size: 0.85rem;
+      margin-top: 3rem;
+    }
+
+    /* Floating SOS Help Button */
+    .help-fab {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 10;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      background: #F63851;
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(246, 56, 81, 0.5);
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .help-fab:hover { background: #FE581D; transform: scale(1.05); }
+
+    .help-panel {
+      position: fixed;
+      bottom: 5.5rem;
+      right: 1.5rem;
+      z-index: 10;
+      width: 320px;
+      max-width: calc(100vw - 3rem);
+      background: rgba(30, 38, 85, 0.92);
+      border: 1px solid rgba(246, 56, 81, 0.9);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 48px rgba(30, 38, 85, 0.6);
+    }
+
+    .help-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .help-panel-header h3 {
+      font-family: 'Nunito', sans-serif;
+      color: #FF6F91;
+      font-weight: 700;
+    }
+
+    .help-panel-close {
+      background: transparent;
+      border: none;
+      color: #f4e6cf;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .help-panel-close:hover { color: #FCAE01; }
+
+    .hidden { display: none !important; }
+
+    /* Scrollbar */
+    #messages-container::-webkit-scrollbar,
+    #buddy-chat-messages::-webkit-scrollbar { width: 6px; }
+
+    #messages-container::-webkit-scrollbar-track,
+    #buddy-chat-messages::-webkit-scrollbar-track { background: rgba(30, 38, 85, 0.4); }
+
+    #messages-container::-webkit-scrollbar-thumb,
+    #buddy-chat-messages::-webkit-scrollbar-thumb { background: #50295B; border-radius: 3px; }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 2.2rem; }
+      .help-fab { width: 48px; height: 48px; font-size: 1.3rem; bottom: 1rem; right: 1rem; }
+      .help-panel { bottom: 4.5rem; right: 0.5rem; left: 0.5rem; width: auto; }
+    }
+  </style>
+>>>>>>> Stashed changes
 </head>
 <body>
+  <!-- Background art: nested organic twilight blobs -->
+  <div class="bg-art">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+  </div>
+
   <header>
     <h1>Crepuscul</h1>
     <p class="tagline">For the hours when the world feels heavy</p>
@@ -42,6 +606,15 @@
       <button id="submit-checkin" class="primary-btn" disabled>Send Check-in</button>
     </section>
 
+<<<<<<< Updated upstream
+=======
+    <section id="dashboard" class="card hidden">
+      <h2>What's available for you</h2>
+      <p class="subtitle">Based on how you're feeling</p>
+      <div id="features-grid"></div>
+    </section>
+
+>>>>>>> Stashed changes
     <section id="exercise-area" class="card hidden">
       <h2 id="exercise-title"></h2>
       <p id="exercise-instructions"></p>
@@ -54,6 +627,29 @@
       <button id="close-exercise" class="secondary-btn">Close</button>
     </section>
 
+<<<<<<< Updated upstream
+=======
+    <section id="buddy-section" class="card hidden">
+      <h2>Find a Buddy</h2>
+      <p class="subtitle">Connect anonymously with someone who feels similar to you</p>
+      <div id="buddy-match-area">
+        <button id="find-buddy-btn" class="primary-btn">Find a Buddy</button>
+        <button id="cancel-buddy-btn" class="secondary-btn hidden">Cancel Search</button>
+        <p id="buddy-status" class="subtitle"></p>
+      </div>
+      <div id="buddy-chat" class="hidden">
+        <div id="buddy-chat-messages"></div>
+        <div id="buddy-chat-form">
+          <textarea id="buddy-chat-input" placeholder="Say something kind..." maxlength="500"></textarea>
+          <div id="buddy-chat-actions">
+            <button id="buddy-send-btn" class="primary-btn">Send</button>
+            <button id="leave-buddy-btn" class="secondary-btn">Leave Chat</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+>>>>>>> Stashed changes
     <section id="support-wall" class="card">
       <h2>Support Wall</h2>
       <p class="subtitle">Messages from others who are awake right now</p>
@@ -72,10 +668,13 @@
     </section>
   </main>
 
+<<<<<<< Updated upstream
   <footer>
     <p>Crepuscul - You are not alone in the dark.</p>
   </footer>
 
+=======
+>>>>>>> Stashed changes
   <button id="help-fab" class="help-fab" title="Get help now">?</button>
 
   <div id="help-panel" class="help-panel hidden">

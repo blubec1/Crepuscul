@@ -47,7 +47,7 @@ function initUserStatus() {
   } else {
     statusBar.innerHTML = `
       <span class="user-greeting">Browsing as <strong>Guest</strong></span>
-      <button id="login-link-btn" class="logout-btn">Sign In</button>
+      <button id="login-link-btn" class="primary-btn">Sign In</button>
     `;
   }
 
