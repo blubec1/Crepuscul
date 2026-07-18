@@ -113,7 +113,7 @@ public class PenPalController : ControllerBase
         var threads = await _db.PenPalThreads
             .Where(t => t.User1Alias == alias || t.User2Alias == alias)
             .OrderByDescending(t => t.CreatedAt)
-            .Take(20)
+            .Take(100)
             .ToListAsync();
 
         var result = new List<object>();
@@ -128,6 +128,10 @@ public class PenPalController : ControllerBase
                 .CountAsync(m => m.ThreadId == thread.Id && !m.IsRead && m.SenderAlias != alias);
 
             var peerAlias = thread.User1Alias == alias ? thread.User2Alias : thread.User1Alias;
+            var myMsgCount = await _db.PenPalMessages
+                .CountAsync(m => m.ThreadId == thread.Id && m.SenderAlias == alias);
+            var peerMsgCount = await _db.PenPalMessages
+                .CountAsync(m => m.ThreadId == thread.Id && m.SenderAlias != alias);
 
             result.Add(new
             {
@@ -137,7 +141,9 @@ public class PenPalController : ControllerBase
                 lastMessageAt = lastMessage?.CreatedAt,
                 unreadCount,
                 isClosed = thread.IsClosed,
-                messageCount = await _db.PenPalMessages.CountAsync(m => m.ThreadId == thread.Id)
+                messageCount = await _db.PenPalMessages.CountAsync(m => m.ThreadId == thread.Id),
+                myMsgCount,
+                peerMsgCount
             });
         }
 
@@ -285,7 +291,7 @@ public class PenPalController : ControllerBase
         var myMessageCount = await _db.PenPalMessages
             .CountAsync(m => m.ThreadId == threadId && m.SenderAlias == profile.Alias);
 
-        if (myMessageCount >= 2)
+        if (myMessageCount >= 5)
             return BadRequest(new { error = "You have reached the maximum messages in this conversation" });
 
         var message = new PenPalMessage
@@ -302,7 +308,7 @@ public class PenPalController : ControllerBase
         var peerMessages = await _db.PenPalMessages
             .CountAsync(m => m.ThreadId == threadId && m.SenderAlias != profile.Alias);
 
-        if (myMessageCount + 1 >= 2 && peerMessages >= 2)
+        if (myMessageCount + 1 >= 5 && peerMessages >= 5)
             thread.IsClosed = true;
 
         await _db.SaveChangesAsync();

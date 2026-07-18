@@ -1470,7 +1470,7 @@ let penpalCurrentView = "inbox";
 let penpalCurrentThreadId = null;
 let penpalPollInterval = null;
 
-function initPenPal() {
+async function initPenPal() {
   document.getElementById("penpal-section").classList.remove("hidden");
   if (!isLoggedIn()) {
     document.getElementById("penpal-alias-setup").classList.remove("hidden");
@@ -1482,6 +1482,9 @@ function initPenPal() {
     `;
     return;
   }
+  try {
+    await authFetch(`${API}/api/penpal/profile`);
+  } catch {}
   showPenPalInbox();
 }
 
@@ -1597,7 +1600,8 @@ function renderPenPalInbox(threads) {
     const time = t.lastMessageAt ? timeAgo(t.lastMessageAt) : "";
     const unread = t.unreadCount > 0 ? `<span class="penpal-unread-badge">${t.unreadCount}</span>` : "";
     const closedClass = t.isClosed ? " penpal-thread-closed-item" : "";
-    const myMsgCount = Math.min(t.messageCount, 4);
+    const myMsgCount = t.myMsgCount || 0;
+    const peerMsgCount = t.peerMsgCount || 0;
     return `
       <div class="penpal-inbox-item${closedClass}" data-thread-id="${t.threadId}">
         <div class="penpal-inbox-header">
@@ -1607,7 +1611,7 @@ function renderPenPalInbox(threads) {
         <p class="penpal-inbox-preview">${preview}</p>
         <div class="penpal-inbox-footer">
           <span class="penpal-inbox-time">${time}</span>
-          <span class="penpal-inbox-count">${myMsgCount}/4 messages</span>
+          <span class="penpal-inbox-count">${myMsgCount} you / ${peerMsgCount} them</span>
         </div>
       </div>
     `;
